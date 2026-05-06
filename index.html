@@ -961,6 +961,28 @@ function gerarRelatorio() {
   };
   testesHistorico.push(registro);
 
+  // ── Enviar para Google Sheets ──
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwppbri8IMyEZ7tjlniDXCfr7Rf2KyyMgPUkDo62e93aKQ7kwDLH_zC9mbAlGRw4047aA/exec';
+  const payload = {
+    teste: registro.teste,
+    dataHora: new Date().toLocaleString('pt-BR'),
+    duracaoTotal: formatMs(registro.duracaoTotal),
+    tarefasConcluidas: registro.tarefas.filter(t => t.concluida).length,
+    tarefas: registro.tarefas.map(t => ({
+      nome: t.nome,
+      concluida: t.concluida,
+      tempo: formatMs(t.tempo),
+      telas: t.telas
+    })),
+    maisVisitadas: registro.maisVisitadas
+  };
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {}); // silencia erros de rede — dados locais continuam disponíveis
+
   document.getElementById('relatorioTitulo').textContent = 'Relatório — Teste #' + testeNum;
   document.getElementById('relatorioData').textContent = new Date().toLocaleString('pt-BR');
   renderRelatorio(registro);
