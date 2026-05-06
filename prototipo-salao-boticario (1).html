@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Salão — Grupo Boticário</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #e8e8e8; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 48px; }
+
+  .outer { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
+
+  /* header strip above phone */
+  .test-strip { width: 320px; display: flex; align-items: center; justify-content: space-between; }
+  .test-strip-label { font-size: 12px; color: #666; font-weight: 500; }
+  .new-test-btn { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+  .new-test-btn:hover { opacity: 0.85; }
+
+  /* tasks reference panel */
+  .tasks-panel { width: 320px; background: #fff; border-radius: 16px; border: 0.5px solid #ddd; padding: 16px; }
+  .tasks-panel-title { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .task-chips { display: flex; flex-direction: column; gap: 7px; }
+  .task-chip { display: flex; align-items: center; gap: 9px; }
+  .chip-num { width: 22px; height: 22px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .chip-num.done { background: #1D9E75; color: #fff; }
+  .chip-text { font-size: 12px; color: #444; }
+  .chip-text.done { color: #aaa; text-decoration: line-through; }
+  .progress-wrap { height: 4px; background: #eee; border-radius: 2px; margin-top: 14px; }
+  .progress-fill { height: 4px; background: #1D9E75; border-radius: 2px; transition: width 0.4s; }
+  .progress-txt { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+  /* phone frame */
+  .phone { width: 320px; height: 640px; border-radius: 36px; border: 8px solid #1a1a1a; background: #fff; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; position: relative; }
+  .notch { height: 28px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; border-bottom: 0.5px solid #e8e8e8; }
+  .notch-time { font-size: 11px; font-weight: 600; color: #1a1a1a; }
+  .notch-icons { display: flex; gap: 4px; align-items: center; }
+  .notch-icons span { font-size: 9px; color: #555; }
+
+  .screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; display: none; min-height: 0; }
+  .screen.active { display: flex; }
+
+  .s-header { padding: 14px 16px 10px; background: #fff; border-bottom: 0.5px solid #e8e8e8; flex-shrink: 0; }
+  .s-header .title { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+  .s-header .sub { font-size: 12px; color: #888; margin-top: 2px; }
+  .s-header-row { display: flex; align-items: center; justify-content: space-between; }
+
+  .scroll { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .tab-bar { height: 54px; background: #fff; border-top: 0.5px solid #e8e8e8; display: flex; align-items: center; justify-content: space-around; flex-shrink: 0; padding-bottom: 4px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 10px; border-radius: 10px; transition: background 0.15s; }
+  .tab:hover { background: #f5f5f5; }
+  .tab svg { width: 20px; height: 20px; stroke: #bbb; fill: none; stroke-width: 2; }
+  .tab span { font-size: 9px; color: #bbb; font-weight: 500; }
+  .tab.active svg { stroke: #1D9E75; }
+  .tab.active span { color: #1D9E75; }
+
+  .btn-primary { background: #1D9E75; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { opacity: 0.75; }
+  .btn-outline { background: #fff; color: #1D9E75; border: 1.5px solid #1D9E75; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; width: 100%; cursor: pointer; }
+
+  .card { background: #fff; border: 0.5px solid #e8e8e8; border-radius: 14px; padding: 12px 14px; }
+  .card-gray { background: #f7f7f7; border-radius: 14px; padding: 12px 14px; }
+
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
+  .input-label { font-size: 12px; font-weight: 500; color: #555; }
+  .input-field { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #1a1a1a; background: #fff; outline: none; width: 100%; transition: border-color 0.15s; }
+  .input-field:focus { border-color: #1D9E75; }
+
+  .list-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; cursor: pointer; }
+  .list-item:last-child { border-bottom: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #9FE1CB; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #085041; flex-shrink: 0; }
+  .item-name { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+  .item-sub { font-size: 11px; color: #999; margin-top: 1px; }
+
+  .tag-red { background: #FCEBEB; color: #A32D2D; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  .tag-amber { background: #FAEEDA; color: #633806; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  .tag-green { background: #E1F5EE; color: #085041; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+
+  .metric-row { display: flex; gap: 8px; }
+  .metric { flex: 1; background: #f7f7f7; border-radius: 12px; padding: 10px 12px; }
+  .metric .mlabel { font-size: 10px; color: #888; margin-bottom: 3px; }
+  .metric .mval { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .metric .mval.green { color: #1D9E75; }
+
+  .section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .alert-bar { background: #FAEEDA; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF9F27; flex-shrink: 0; }
+  .alert-bar span { font-size: 12px; color: #633806; font-weight: 500; }
+  .alert-bar-red { background: #FCEBEB; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+  .alert-bar-red span { font-size: 12px; color: #A32D2D; font-weight: 500; }
+
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qa-btn { background: #f7f7f7; border: none; border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: background 0.15s; }
+  .qa-btn:hover { background: #E1F5EE; }
+  .qa-btn svg { width: 22px; height: 22px; stroke: #1D9E75; fill: none; stroke-width: 2; }
+  .qa-btn span { font-size: 11px; font-weight: 600; color: #444; }
+
+  .agenda-slot { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .agenda-time { font-size: 11px; color: #999; width: 36px; flex-shrink: 0; padding-top: 6px; }
+  .agenda-block { flex: 1; border-radius: 10px; padding: 8px 10px; }
+  .agenda-block.filled { background: #E1F5EE; }
+  .agenda-block.filled-amber { background: #FAEEDA; }
+  .agenda-block.empty { background: #f7f7f7; border: 1.5px dashed #d0d0d0; display: flex; align-items: center; justify-content: center; min-height: 38px; cursor: pointer; }
+  .agenda-block.empty span { font-size: 11px; color: #bbb; }
+  .agenda-block .aname { font-size: 12px; font-weight: 600; color: #085041; }
+  .agenda-block .asvc { font-size: 11px; color: #0F6E56; margin-top: 1px; }
+  .agenda-block .aname-amber { font-size: 12px; font-weight: 600; color: #633806; }
+  .agenda-block .asvc-amber { font-size: 11px; color: #854F0B; margin-top: 1px; }
+
+  .day-pills { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
+  .day-pills::-webkit-scrollbar { display: none; }
+  .day-pill { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; border-radius: 10px; cursor: pointer; flex-shrink: 0; }
+  .day-pill.active { background: #1D9E75; }
+  .day-pill .dname { font-size: 10px; color: #999; }
+  .day-pill .dnum { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .day-pill.active .dname, .day-pill.active .dnum { color: #fff; }
+
+  .product-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .product-row:last-child { border-bottom: none; }
+  .product-img { width: 38px; height: 48px; border-radius: 8px; background: #e8e8e8; flex-shrink: 0; }
+  .product-info { flex: 1; min-width: 0; }
+  .product-info .pname { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+  .product-qty { font-size: 12px; color: #555; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .repor-btn { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 9px 14px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; white-space: nowrap; }
+  .repor-btn:hover { opacity: 0.85; }
+
+  .lançamento-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .lançamento-row:last-child { border-bottom: none; }
+  .lanc-info { flex: 1; }
+  .lanc-info .lname { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+  .lanc-info .lsub { font-size: 11px; color: #999; margin-top: 1px; }
+  .lanc-val { font-size: 14px; font-weight: 700; }
+  .lanc-val.in { color: #1D9E75; }
+  .lanc-val.out { color: #A32D2D; }
+
+  .success-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 14px; text-align: center; }
+  .success-icon { width: 72px; height: 72px; border-radius: 50%; background: #E1F5EE; display: flex; align-items: center; justify-content: center; }
+  .success-icon svg { width: 36px; height: 36px; stroke: #1D9E75; fill: none; stroke-width: 2.5; }
+  .success-title { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .success-sub { font-size: 14px; color: #888; line-height: 1.5; }
+
+  .login-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 28px 20px; gap: 20px; background: #fff; }
+  .login-brand { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .login-logo { width: 56px; height: 56px; border-radius: 16px; background: #1D9E75; display: flex; align-items: center; justify-content: center; }
+  .login-logo span { font-size: 26px; font-weight: 700; color: #fff; }
+  .login-app-name { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .login-tagline { font-size: 13px; color: #888; text-align: center; }
+  .login-form { display: flex; flex-direction: column; gap: 10px; }
+  .login-bottom { display: flex; flex-direction: column; gap: 8px; }
+  .link-text { font-size: 12px; color: #888; text-align: center; }
+  .link-text span { color: #1D9E75; font-weight: 600; cursor: pointer; }
+
+  .bar-chart { display: flex; gap: 6px; align-items: flex-end; height: 60px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .bar { width: 100%; border-radius: 4px 4px 0 0; background: #9FE1CB; min-height: 4px; }
+  .bar.today { background: #1D9E75; }
+  .bar-day { font-size: 9px; color: #bbb; }
+
+  .back-btn { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .back-btn svg { width: 16px; height: 16px; stroke: #1D9E75; fill: none; stroke-width: 2.5; }
+  .back-btn span { font-size: 13px; color: #1D9E75; font-weight: 500; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 13px; color: #1a1a1a; font-weight: 500; }
+  .toggle-sub { font-size: 11px; color: #999; margin-top: 2px; }
+  .toggle { width: 44px; height: 24px; border-radius: 12px; background: #1D9E75; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+  .toggle::after { content: ''; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; transition: right 0.2s; }
+  .toggle.off { background: #d0d0d0; }
+  .toggle.off::after { right: auto; left: 3px; }
+
+  .qty-ctrl { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+  .qty-ctrl button { width: 28px; height: 28px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; line-height: 1; }
+  .qty-ctrl .qty-minus { background: #f0f0f0; color: #555; }
+  .qty-ctrl .qty-plus { background: #1D9E75; color: #fff; }
+  .qty-ctrl .qty-val { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+</style>
+</head>
+<body>
+<div class="outer">
+
+  <!-- strip acima do celular -->
+  <div class="test-strip">
+    <span class="test-strip-label" id="testLabel">Teste #1</span>
+    <button class="new-test-btn" onclick="novoTeste()">Novo teste</button>
+  </div>
+
+  <!-- celular -->
+  <div class="phone">
+    <div class="notch">
+      <span class="notch-time" id="clock">09:41</span>
+      <div class="notch-icons"><span>●●●●</span><span>WiFi</span><span>100%</span></div>
+    </div>
+
+    <!-- ═══════════ LOGIN ═══════════ -->
+    <div class="screen active" id="screen-login">
+      <div class="login-wrapper">
+        <div class="login-brand">
+          <div class="login-logo"><span>B</span></div>
+          <div class="login-app-name">Meu Salão</div>
+          <div class="login-tagline">Gerencie seu negócio com facilidade</div>
+        </div>
+        <div class="login-form">
+          <div class="input-group">
+            <label class="input-label">Telefone ou e-mail</label>
+            <input class="input-field" type="text" placeholder="(11) 99999-0000" id="loginUser">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Senha</label>
+            <input class="input-field" type="password" placeholder="••••••••" id="loginPass">
+          </div>
+        </div>
+        <div class="login-bottom">
+          <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+          <div class="link-text">Ainda não tem conta? <span onclick="fazerLogin()">Criar conta grátis</span></div>
+          <div class="link-text"><span>Esqueci minha senha</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ HOME ═══════════ -->
+    <div class="screen" id="screen-home">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div>
+            <div class="title" id="homeGreeting">Bom dia, Ana ✦</div>
+            <div class="sub">Terça, 06 de maio de 2025</div>
+          </div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#085041;" id="homeAvatar">A</div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="metric-row">
+          <div class="metric"><div class="mlabel">Hoje no caixa</div><div class="mval green">R$ 480</div></div>
+          <div class="metric"><div class="mlabel">Atendimentos</div><div class="mval">4 de 7</div></div>
+        </div>
+        <div class="section-label">Próximos hoje</div>
+        <div class="card">
+          <div class="list-item" style="padding:8px 0;" onclick="ir('agenda')">
+            <div class="avatar">CM</div>
+            <div style="flex:1"><div class="item-name">Carla Mendes</div><div class="item-sub">14h00 · Corte + escova</div></div>
+            <div class="tag-green">14h00</div>
+          </div>
+          <div class="list-item" style="padding:8px 0;border-bottom:none;" onclick="ir('agenda')">
+            <div class="avatar" style="background:#FAEEDA;color:#633806;">RS</div>
+            <div style="flex:1"><div class="item-name">Renata Santos</div><div class="item-sub">16h00 · Coloração</div></div>
+            <div class="tag-amber">16h00</div>
+          </div>
+        </div>
+        <div class="alert-bar">
+          <div class="alert-dot"></div>
+          <span>Estoque baixo: Tônico capilar</span>
+        </div>
+        <div class="section-label">Acesso rápido</div>
+        <div class="quick-actions">
+          <button class="qa-btn" onclick="ir('agenda-novo')">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Agendar</span>
+          </button>
+          <button class="qa-btn" onclick="ir('clientes')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span>Clientes</span>
+          </button>
+          <button class="qa-btn" onclick="ir('financeiro-pagamento')">
+            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <span>Pagamento</span>
+          </button>
+          <button class="qa-btn" onclick="ir('estoque')">
+            <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg>
+            <span>Estoque</span>
+          </button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ AGENDA ═══════════ -->
+    <div class="screen" id="screen-agenda">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="title">Agenda</div>
+          <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="ir('agenda-novo')">+ Novo</button>
+        </div>
+        <div class="day-pills" style="margin-top:10px;">
+          <div class="day-pill"><div class="dname">Seg</div><div class="dnum">5</div></div>
+          <div class="day-pill active"><div class="dname">Ter</div><div class="dnum">6</div></div>
+          <div class="day-pill"><div class="dname">Qua</div><div class="dnum">7</div></div>
+          <div class="day-pill"><div class="dname">Qui</div><div class="dnum">8</div></div>
+          <div class="day-pill"><div class="dname">Sex</div><div class="dnum">9</div></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="agenda-slot">
+          <div class="agenda-time">09h00</div>
+          <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>+ Livre</span></div>
+        </div>
+        <div class="agenda-slot">
+          <div class="agenda-time">10h30</div>
+          <div class="agenda-block filled"><div class="aname">Julia Rocha</div><div class="asvc">Escova progressiva · 1h30</div></div>
+        </div>
+        <div class="agenda-slot">
+          <div class="agenda-time">12h00</div>
+          <div class="agenda-block empty"><span>Pausa almoço</span></div>
+        </div>
+        <div class="agenda-slot">
+          <div class="agenda-time">14h00</div>
+          <div class="agenda-block filled"><div class="aname">Carla Mendes</div><div class="asvc">Corte + escova · 1h30</div></div>
+        </div>
+        <div class="agenda-slot">
+          <div class="agenda-time">16h00</div>
+          <div class="agenda-block filled-amber"><div class="aname-amber">Renata Santos</div><div class="asvc-amber">Coloração · 2h · pendente</div></div>
+        </div>
+        <div class="agenda-slot">
+          <div class="agenda-time">18h00</div>
+          <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>+ Livre</span></div>
+        </div>
+        <button class="btn-primary" onclick="ir('agenda-novo')">+ Novo agendamento</button>
+      </div>
+      <div class="tab-bar">
+        <div class="tab" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab active" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ NOVO AGENDAMENTO ═══════════ -->
+    <div class="screen" id="screen-agenda-novo">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Novo agendamento</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">Cliente</label>
+          <input class="input-field" type="text" placeholder="Nome da cliente" style="background:#f7f7f7;">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Serviço</label>
+          <select class="input-field" style="background:#f7f7f7;appearance:none;">
+            <option>Corte de cabelo</option>
+            <option>Escova</option>
+            <option>Coloração</option>
+            <option>Progressiva</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="input-group" style="flex:1">
+            <label class="input-label">Data</label>
+            <input class="input-field" type="text" value="06/05/2025" style="background:#f7f7f7;">
+          </div>
+          <div class="input-group" style="flex:1">
+            <label class="input-label">Horário</label>
+            <input class="input-field" type="text" placeholder="09h00" style="background:#f7f7f7;">
+          </div>
+        </div>
+        <div class="card-gray" style="display:flex;align-items:center;gap:10px;">
+          <svg width="18" height="18" fill="none" stroke-width="2" stroke="#1D9E75" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <div><div style="font-size:12px;font-weight:600;color:#085041;">Lembrete automático ativado</div><div style="font-size:11px;color:#888;">A cliente receberá aviso no WhatsApp</div></div>
+        </div>
+        <button class="btn-primary" onclick="marcarTarefa(1); ir('agenda-sucesso')">Confirmar agendamento</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ SUCESSO AGENDAMENTO ═══════════ -->
+    <div class="screen" id="screen-agenda-sucesso">
+      <div class="success-screen">
+        <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="success-title">Agendado!</div>
+        <div class="success-sub">O horário foi confirmado e a cliente receberá um aviso no WhatsApp.</div>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda')">Ver agenda do dia</button>
+        <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ CLIENTES ═══════════ -->
+    <div class="screen" id="screen-clientes">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="title">Clientes</div>
+          <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="ir('cliente-novo')">+ Nova</button>
+        </div>
+      </div>
+      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar cliente..." style="background:#f7f7f7;border-color:#f0f0f0;"></div>
+      <div class="scroll" style="padding-top:10px;">
+        <div class="section-label">35 clientes</div>
+        <div class="card">
+          <div class="list-item" onclick="ir('cliente-detalhe')">
+            <div class="avatar">AB</div>
+            <div style="flex:1"><div class="item-name">Ana Beatriz</div><div class="item-sub">Último: há 7 dias</div></div>
+          </div>
+          <div class="list-item" onclick="ir('cliente-detalhe')">
+            <div class="avatar">CM</div>
+            <div style="flex:1"><div class="item-name">Carla Mendes</div><div class="item-sub">Último: há 14 dias</div></div>
+          </div>
+          <div class="list-item" onclick="ir('cliente-detalhe')">
+            <div class="avatar" style="background:#FAEEDA;color:#633806;">FT</div>
+            <div style="flex:1"><div class="item-name">Fernanda Tavares</div><div class="item-sub">Último: há 32 dias</div></div>
+          </div>
+          <div class="list-item" onclick="ir('cliente-detalhe')">
+            <div class="avatar" style="background:#FAEEDA;color:#633806;">JR</div>
+            <div style="flex:1"><div class="item-name">Julia Rocha</div><div class="item-sub">Último: há 45 dias</div></div>
+          </div>
+          <div class="list-item" style="border-bottom:none;" onclick="ir('cliente-detalhe')">
+            <div class="avatar">MP</div>
+            <div style="flex:1"><div class="item-name">Marcia Pinto</div><div class="item-sub">Último: há 5 dias</div></div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="ir('cliente-novo')">+ Cadastrar nova cliente</button>
+      </div>
+      <div class="tab-bar">
+        <div class="tab" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab active" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ NOVO CLIENTE ═══════════ -->
+    <div class="screen" id="screen-cliente-novo">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Nova cliente</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">Nome completo</label>
+          <input class="input-field" type="text" placeholder="Ex: Maria Silva" id="novoNome">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Telefone (WhatsApp)</label>
+          <input class="input-field" type="tel" placeholder="(11) 99999-0000">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Aniversário (opcional)</label>
+          <input class="input-field" type="text" placeholder="DD/MM">
+        </div>
+        <button class="btn-primary" onclick="salvarCliente()">Salvar cliente</button>
+        <div class="link-text" style="margin-top:-4px;">Só nome e telefone são obrigatórios</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SUCESSO CLIENTE ═══════════ -->
+    <div class="screen" id="screen-cliente-sucesso">
+      <div class="success-screen">
+        <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="success-title">Cliente cadastrada!</div>
+        <div class="success-sub" id="successClienteNome">A cliente foi adicionada à sua lista.</div>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda-novo')">Agendar horário para ela</button>
+        <button class="btn-outline" onclick="ir('clientes')">Ver lista de clientes</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ DETALHE CLIENTE ═══════════ -->
+    <div class="screen" id="screen-cliente-detalhe">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Clientes</span></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0 16px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:#9FE1CB;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#085041;">AB</div>
+          <div style="font-size:18px;font-weight:700;color:#1a1a1a;">Ana Beatriz</div>
+          <div style="font-size:13px;color:#888;">(11) 98765-4321</div>
+        </div>
+        <div class="section-label">Histórico</div>
+        <div class="card">
+          <div class="list-item"><div style="flex:1"><div class="item-name">Escova progressiva</div><div class="item-sub">29 abr · R$ 180</div></div></div>
+          <div class="list-item"><div style="flex:1"><div class="item-name">Corte + hidratação</div><div class="item-sub">15 abr · R$ 110</div></div></div>
+          <div class="list-item" style="border-bottom:none;"><div style="flex:1"><div class="item-name">Coloração</div><div class="item-sub">01 abr · R$ 220</div></div></div>
+        </div>
+        <button class="btn-primary" onclick="ir('agenda-novo')">Agendar horário</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ FINANCEIRO ═══════════ -->
+    <div class="screen" id="screen-financeiro">
+      <div class="s-header">
+        <div class="title">Financeiro</div>
+        <div class="sub">Terça, 06 de maio</div>
+      </div>
+      <div class="scroll">
+        <div class="card-gray" style="padding:16px;">
+          <div style="font-size:12px;color:#888;margin-bottom:4px;">Caixa de hoje</div>
+          <div style="font-size:28px;font-weight:700;color:#1D9E75;">R$ 480,00</div>
+          <div style="display:flex;gap:16px;margin-top:6px;">
+            <div style="font-size:12px;color:#555;">Entrou: <span style="color:#1D9E75;font-weight:600;">R$ 600</span></div>
+            <div style="font-size:12px;color:#555;">Saiu: <span style="color:#A32D2D;font-weight:600;">R$ 120</span></div>
+          </div>
+        </div>
+        <div class="section-label">Esta semana</div>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar" style="height:30px;"></div><div class="bar-day">Seg</div></div>
+          <div class="bar-col"><div class="bar" style="height:45px;"></div><div class="bar-day">Ter</div></div>
+          <div class="bar-col"><div class="bar today" style="height:55px;"></div><div class="bar-day">Qua</div></div>
+          <div class="bar-col"><div class="bar" style="height:38px;"></div><div class="bar-day">Qui</div></div>
+          <div class="bar-col"><div class="bar" style="height:50px;"></div><div class="bar-day">Sex</div></div>
+          <div class="bar-col"><div class="bar" style="height:20px;"></div><div class="bar-day">Sáb</div></div>
+          <div class="bar-col"><div class="bar" style="height:4px;background:#e0e0e0;"></div><div class="bar-day">Dom</div></div>
+        </div>
+        <div class="section-label">Lançamentos de hoje</div>
+        <div class="card">
+          <div class="lançamento-row">
+            <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;"></div>
+            <div class="lanc-info"><div class="lname">Escova — Carla</div><div class="lsub">Pix</div></div>
+            <div class="lanc-val in">+R$ 80</div>
+          </div>
+          <div class="lançamento-row">
+            <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;"></div>
+            <div class="lanc-info"><div class="lname">Coloração — Julia</div><div class="lsub">Dinheiro</div></div>
+            <div class="lanc-val in">+R$ 220</div>
+          </div>
+          <div class="lançamento-row">
+            <div style="width:8px;height:8px;border-radius:50%;background:#A32D2D;flex-shrink:0;"></div>
+            <div class="lanc-info"><div class="lname">Produto Boticário</div><div class="lsub">Reposição</div></div>
+            <div class="lanc-val out">-R$ 120</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Registrar entrada</button>
+          <button class="btn-outline" style="flex:1;">+ Registrar saída</button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab active" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ REGISTRAR PAGAMENTO ═══════════ -->
+    <div class="screen" id="screen-financeiro-pagamento">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Registrar pagamento</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">O que foi pago?</label>
+          <input class="input-field" type="text" placeholder="Ex: Escova da Carla">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Valor recebido</label>
+          <input class="input-field" type="text" placeholder="R$ 0,00" style="font-size:20px;font-weight:700;color:#1D9E75;">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Como foi pago?</label>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button onclick="selPag(this)" style="flex:1;padding:10px 6px;border:1.5px solid #1D9E75;border-radius:10px;background:#E1F5EE;color:#085041;font-size:12px;font-weight:600;cursor:pointer;">Pix</button>
+            <button onclick="selPag(this)" style="flex:1;padding:10px 6px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;color:#555;font-size:12px;font-weight:600;cursor:pointer;">Cartão</button>
+            <button onclick="selPag(this)" style="flex:1;padding:10px 6px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;color:#555;font-size:12px;font-weight:600;cursor:pointer;">Dinheiro</button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="marcarTarefa(3); ir('pagamento-sucesso')">Confirmar pagamento</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ SUCESSO PAGAMENTO ═══════════ -->
+    <div class="screen" id="screen-pagamento-sucesso">
+      <div class="success-screen">
+        <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="success-title">Pagamento registrado!</div>
+        <div class="success-sub">Seu caixa foi atualizado automaticamente.</div>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('financeiro')">Ver quanto ganhei hoje</button>
+        <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ ESTOQUE ═══════════ -->
+    <div class="screen" id="screen-estoque">
+      <div class="s-header">
+        <div class="title">Estoque</div>
+        <div class="sub">Seus produtos profissionais</div>
+      </div>
+      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar produto..." style="background:#f7f7f7;border-color:#f0f0f0;"></div>
+      <div class="scroll" style="padding-top:10px;">
+        <div class="alert-bar-red">
+          <div class="alert-dot" style="background:#E24B4A;"></div>
+          <span>2 produtos em falta — repor agora</span>
+        </div>
+        <div class="section-label">Todos os produtos</div>
+        <div class="card">
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info">
+              <div class="pname">Tônico Capilar Boticário</div>
+              <div class="product-qty">2 unidades <span class="tag-red">Crítico</span></div>
+            </div>
+            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info">
+              <div class="pname">Óleo de Argan 100ml</div>
+              <div class="product-qty">1 unidade <span class="tag-red">Crítico</span></div>
+            </div>
+            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info">
+              <div class="pname">Máscara Hidratante</div>
+              <div class="product-qty">4 unidades <span class="tag-amber">Baixo</span></div>
+            </div>
+            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info">
+              <div class="pname">Shampoo Profissional</div>
+              <div class="product-qty">12 unidades <span class="tag-green">OK</span></div>
+            </div>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info">
+              <div class="pname">Condicionador Reparador</div>
+              <div class="product-qty">8 unidades <span class="tag-green">OK</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab active" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ REPOSIÇÃO ═══════════ -->
+    <div class="screen" id="screen-reposicao">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('estoque')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Pedir produtos</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="card-gray">
+          <div style="font-size:12px;color:#888;margin-bottom:2px;">Sugeridos para você</div>
+          <div style="font-size:11px;color:#1D9E75;font-weight:500;">Baseado no seu estoque atual</div>
+        </div>
+        <div class="card">
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info"><div class="pname">Tônico Capilar Boticário</div><div class="product-qty" style="margin-top:3px;">R$ 42,90 / un.</div></div>
+            <div class="qty-ctrl">
+              <button class="qty-minus" onclick="changeQty(this,-1)">−</button>
+              <span class="qty-val">2</span>
+              <button class="qty-plus" onclick="changeQty(this,1)">+</button>
+            </div>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info"><div class="pname">Óleo de Argan 100ml</div><div class="product-qty" style="margin-top:3px;">R$ 78,00 / un.</div></div>
+            <div class="qty-ctrl">
+              <button class="qty-minus" onclick="changeQty(this,-1)">−</button>
+              <span class="qty-val">1</span>
+              <button class="qty-plus" onclick="changeQty(this,1)">+</button>
+            </div>
+          </div>
+          <div class="product-row">
+            <div class="product-img"></div>
+            <div class="product-info"><div class="pname">Máscara Hidratante</div><div class="product-qty" style="margin-top:3px;">R$ 55,50 / un.</div></div>
+            <div class="qty-ctrl">
+              <button class="qty-minus" onclick="changeQty(this,-1)">−</button>
+              <span class="qty-val">0</span>
+              <button class="qty-plus" onclick="changeQty(this,1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-gray" style="display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:12px;color:#888;">Total do pedido</div><div style="font-size:20px;font-weight:700;color:#1a1a1a;" id="totalPedido">R$ 163,80</div></div>
+          <div style="font-size:11px;color:#888;text-align:right;">Frete:<br><span style="color:#1a1a1a;font-weight:500;">R$ 18,00</span></div>
+        </div>
+        <button class="btn-primary" onclick="marcarTarefa(5); ir('reposicao-sucesso')">Confirmar pedido</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ SUCESSO REPOSIÇÃO ═══════════ -->
+    <div class="screen" id="screen-reposicao-sucesso">
+      <div class="success-screen">
+        <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="success-title">Pedido enviado!</div>
+        <div class="success-sub">Seus produtos chegam em até 3 dias úteis. Você receberá um aviso quando sair para entrega.</div>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('estoque')">Ver meu estoque</button>
+        <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ MAIS (lembretes) ═══════════ -->
+    <div class="screen" id="screen-mais">
+      <div class="s-header">
+        <div class="title">Lembretes automáticos</div>
+        <div class="sub">Configurações de avisos</div>
+      </div>
+      <div class="scroll">
+        <div class="card">
+          <div class="section-label" style="margin-bottom:8px;">Confirmação de agendamento</div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Enviar via WhatsApp</div><div class="toggle-sub">1 dia antes do atendimento</div></div>
+            <div class="toggle" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Enviar via SMS</div><div class="toggle-sub">Backup se WhatsApp falhar</div></div>
+            <div class="toggle off" onclick="this.classList.toggle('off')"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="section-label" style="margin-bottom:6px;">Antecedência</div>
+            <div style="display:flex;gap:6px;">
+              <div style="flex:1;text-align:center;font-size:12px;padding:8px 6px;border:1.5px solid #1D9E75;border-radius:10px;color:#085041;font-weight:600;background:#E1F5EE;cursor:pointer;">1 dia</div>
+              <div style="flex:1;text-align:center;font-size:12px;padding:8px 6px;border:1.5px solid #e0e0e0;border-radius:10px;color:#555;cursor:pointer;">2 horas</div>
+              <div style="flex:1;text-align:center;font-size:12px;padding:8px 6px;border:1.5px solid #e0e0e0;border-radius:10px;color:#555;cursor:pointer;">Ambos</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-label" style="margin-bottom:8px;">Pré-visualização da mensagem</div>
+          <div style="background:#f7f7f7;border-radius:10px;padding:12px;">
+            <div style="font-size:12px;color:#555;line-height:1.6;">Olá, [nome]! Lembrando que seu horário no salão é amanhã às [hora]. Confirme respondendo SIM.</div>
+          </div>
+          <button class="btn-outline" style="margin-top:10px;">Editar mensagem</button>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab" onclick="ir('home')"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
+        <div class="tab" onclick="ir('agenda')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
+        <div class="tab" onclick="ir('clientes')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
+        <div class="tab" onclick="ir('financeiro')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
+        <div class="tab active" onclick="ir('mais')"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Mais</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ RELATÓRIO ═══════════ -->
+    <div class="screen" id="screen-relatorio">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div>
+            <div class="title" id="relatorioTitulo">Relatório — Teste #1</div>
+            <div class="sub" id="relatorioData">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll" id="relatorioConteudo" style="gap:0;padding-bottom:8px;">
+      </div>
+      <div style="padding:12px 14px;background:#fff;border-top:0.5px solid #eee;flex-shrink:0;display:flex;gap:8px;">
+        <button class="btn-primary" onclick="novoTeste()" style="flex:1;font-size:13px;padding:12px;">Novo teste</button>
+        <button class="btn-outline" onclick="ir('home')" style="flex:1;font-size:13px;padding:12px;">Continuar</button>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+
+  <!-- painel de tarefas (referência, não guia) -->
+  <div class="tasks-panel">
+    <div class="tasks-panel-title">Tarefas do teste</div>
+    <div class="task-chips" id="taskChips">
+      <div class="task-chip"><div class="chip-num" id="cn0">1</div><div class="chip-text" id="ct0">Cadastre um cliente novo</div></div>
+      <div class="task-chip"><div class="chip-num" id="cn1">2</div><div class="chip-text" id="ct1">Agende um horário</div></div>
+      <div class="task-chip"><div class="chip-num" id="cn2">3</div><div class="chip-text" id="ct2">Veja sua agenda do dia</div></div>
+      <div class="task-chip"><div class="chip-num" id="cn3">4</div><div class="chip-text" id="ct3">Registre um pagamento</div></div>
+      <div class="task-chip"><div class="chip-num" id="cn4">5</div><div class="chip-text" id="ct4">Confira quanto você ganhou</div></div>
+      <div class="task-chip"><div class="chip-num" id="cn5">6</div><div class="chip-text" id="ct5">Veja um produto e tente pedir reposição</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
+    <div class="progress-txt" id="pTxt">0 de 6 concluídas</div>
+    <button onclick="gerarRelatorio()" style="margin-top:14px;width:100%;background:#1a1a1a;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Ver relatório deste teste</button>
+    <button onclick="exportarTexto()" style="margin-top:6px;width:100%;background:#fff;color:#1a1a1a;border:1px solid #ddd;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">⬇ Exportar todos os testes (.txt)</button>
+  </div>
+
+</div><!-- /outer -->
+
+<script>
+// ═══════════════════════════════════════════════
+// SISTEMA DE COLETA DE DADOS — TESTE DE USABILIDADE
+// ═══════════════════════════════════════════════
+
+const TAREFAS = [
+  'Cadastrar um cliente novo',
+  'Agendar um horário',
+  'Ver a agenda do dia',
+  'Registrar um pagamento',
+  'Conferir quanto ganhou',
+  'Ver produto e pedir reposição'
+];
+
+// Estado do teste atual
+let testeNum = 1;
+let testesHistorico = []; // todos os testes desta sessão
+let testeAtual = null;
+
+// Estado das tarefas
+let taskDone = [false,false,false,false,false,false];
+let taskInicio = [null,null,null,null,null,null]; // timestamp de início de cada tarefa
+let taskFim   = [null,null,null,null,null,null]; // timestamp de conclusão
+let taskTelas = [[], [], [], [], [], []];         // telas visitadas por tarefa
+let taskAtiva = -1; // qual tarefa está em andamento agora
+
+// Navegação geral
+let telaAtual = 'login';
+let telaAnterior = null;
+let logNavegacao = []; // {tela, ts, duracaoAnterior}
+let testeInicio = null;
+
+// ───────────────────────────────────────────────
+// Mapeamento: qual tela inicia / conclui qual tarefa
+// ───────────────────────────────────────────────
+const telaInicioTarefa = {
+  'cliente-novo':         0,
+  'agenda-novo':          1,
+  'agenda':               2,
+  'financeiro-pagamento': 3,
+  'financeiro':           4,
+  'estoque':              5
+};
+const telaConclusaoTarefa = {
+  'cliente-sucesso':    0,
+  'agenda-sucesso':     1,
+  'agenda':             2,
+  'pagamento-sucesso':  3,
+  'financeiro':         4,
+  'reposicao':          5
+};
+
+function iniciarTeste() {
+  testeInicio = Date.now();
+  taskDone    = [false,false,false,false,false,false];
+  taskInicio  = [null,null,null,null,null,null];
+  taskFim     = [null,null,null,null,null,null];
+  taskTelas   = [[],[],[],[],[],[]];
+  taskAtiva   = -1;
+  logNavegacao = [];
+  telaAtual   = 'login';
+  telaAnterior = null;
+  testeAtual  = { num: testeNum, inicio: new Date().toISOString() };
+}
+
+function ir(id) {
+  const agora = Date.now();
+
+  // registra saída da tela anterior
+  if (telaAtual && logNavegacao.length > 0) {
+    logNavegacao[logNavegacao.length - 1].duracao = agora - logNavegacao[logNavegacao.length - 1].ts;
+  }
+
+  // registra entrada na nova tela
+  logNavegacao.push({ tela: id, ts: agora, duracao: null });
+
+  // registra tela nas tarefas em aberto
+  taskDone.forEach((done, i) => {
+    if (!done && taskInicio[i]) taskTelas[i].push(id);
+  });
+
+  telaAnterior = telaAtual;
+  telaAtual = id;
+
+  // ── verifica início de tarefa ──
+  if (telaInicioTarefa[id] !== undefined) {
+    const idx = telaInicioTarefa[id];
+    if (!taskDone[idx] && taskInicio[idx] === null) {
+      taskInicio[idx] = agora;
+      taskTelas[idx] = [id];
+      taskAtiva = idx;
+    }
+  }
+
+  // ── verifica conclusão de tarefa ──
+  if (telaConclusaoTarefa[id] !== undefined) {
+    const idx = telaConclusaoTarefa[id];
+    if (!taskDone[idx] && taskInicio[idx] !== null) {
+      marcarTarefa(idx, agora);
+    }
+  }
+
+  // troca tela visível
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const t = document.getElementById('screen-' + id);
+  if (t) t.classList.add('active');
+}
+
+function marcarTarefa(idx, ts) {
+  if (taskDone[idx]) return;
+  taskDone[idx] = true;
+  taskFim[idx] = ts || Date.now();
+
+  const num = document.getElementById('cn' + idx);
+  const txt = document.getElementById('ct' + idx);
+  if (num) { num.classList.add('done'); num.textContent = '✓'; }
+  if (txt) txt.classList.add('done');
+  atualizarProgresso();
+}
+
+function atualizarProgresso() {
+  const done = taskDone.filter(Boolean).length;
+  document.getElementById('pFill').style.width = (done/6*100) + '%';
+  document.getElementById('pTxt').textContent = done + ' de 6 concluídas';
+}
+
+// ───────────────────────────────────────────────
+// RELATÓRIO
+// ───────────────────────────────────────────────
+function formatMs(ms) {
+  if (!ms || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return s + 's';
+  return Math.floor(s/60) + 'min ' + (s%60) + 's';
+}
+
+function gerarRelatorio() {
+  const agora = Date.now();
+  const duracaoTotal = agora - testeInicio;
+
+  // telas mais visitadas
+  const contagem = {};
+  logNavegacao.forEach(e => { contagem[e.tela] = (contagem[e.tela]||0)+1; });
+  const maisVisitadas = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // caminhos das tarefas
+  const linhasTarefas = TAREFAS.map((nome, i) => {
+    const concluida = taskDone[i];
+    const tempo = (taskInicio[i] && taskFim[i]) ? taskFim[i] - taskInicio[i] : null;
+    const telas = taskTelas[i];
+    const cliques = telas.length;
+    return { nome, concluida, tempo, telas, cliques };
+  });
+
+  // salvar no histórico
+  const registro = {
+    teste: testeNum,
+    inicio: testeAtual?.inicio || '—',
+    duracaoTotal,
+    tarefas: linhasTarefas,
+    logNavegacao: [...logNavegacao],
+    maisVisitadas
+  };
+  testesHistorico.push(registro);
+
+  document.getElementById('relatorioTitulo').textContent = 'Relatório — Teste #' + testeNum;
+  document.getElementById('relatorioData').textContent = new Date().toLocaleString('pt-BR');
+  renderRelatorio(registro);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-relatorio').classList.add('active');
+}
+
+function renderRelatorio(r) {
+  const el = document.getElementById('relatorioConteudo');
+  const concluidas = r.tarefas.filter(t => t.concluida).length;
+
+  const corTarefa = (t) => t.concluida ? '#1D9E75' : '#A32D2D';
+  const icone = (t) => t.concluida ? '✓' : '✗';
+
+  const tarefasHTML = r.tarefas.map((t, i) => `
+    <div style="border:0.5px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="width:22px;height:22px;border-radius:50%;background:${t.concluida?'#E1F5EE':'#FCEBEB'};color:${corTarefa(t)};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${icone(t)}</div>
+        <div style="font-size:13px;font-weight:600;color:#1a1a1a;flex:1;">${t.nome}</div>
+        <div style="font-size:12px;font-weight:700;color:${corTarefa(t)};">${t.concluida ? 'Concluída' : 'Não concluída'}</div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:11px;color:#888;">⏱ Tempo: <span style="color:#1a1a1a;font-weight:600;">${formatMs(t.tempo)}</span></div>
+        <div style="font-size:11px;color:#888;">🖱 Telas visitadas: <span style="color:#1a1a1a;font-weight:600;">${t.cliques}</span></div>
+      </div>
+      ${t.telas.length > 0 ? `<div style="margin-top:6px;font-size:10px;color:#aaa;line-height:1.6;">Caminho: ${t.telas.join(' → ')}</div>` : ''}
+    </div>
+  `).join('');
+
+  const visitadasHTML = r.maisVisitadas.map(([tela, n]) =>
+    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f0f0f0;font-size:12px;"><span style="color:#555;">${tela}</span><span style="font-weight:600;color:#1a1a1a;">${n}x</span></div>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="background:#f7f7f7;border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#888;margin-bottom:2px;">Duração total do teste</div>
+      <div style="font-size:24px;font-weight:700;color:#1a1a1a;">${formatMs(r.duracaoTotal)}</div>
+      <div style="display:flex;gap:16px;margin-top:6px;">
+        <div style="font-size:12px;color:#555;">Tarefas concluídas: <span style="color:#1D9E75;font-weight:700;">${concluidas}/6</span></div>
+        <div style="font-size:12px;color:#555;">Telas navegadas: <span style="font-weight:700;color:#1a1a1a;">${r.logNavegacao.length}</span></div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Por tarefa</div>
+    ${tarefasHTML}
+    <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin:14px 0 8px;">Telas mais acessadas</div>
+    <div style="background:#fff;border:0.5px solid #eee;border-radius:12px;padding:10px 14px;">
+      ${visitadasHTML}
+    </div>
+  `;
+}
+
+function exportarTexto() {
+  if (testesHistorico.length === 0) return;
+
+  let txt = '=== RELATÓRIO DE TESTES DE USABILIDADE ===\n';
+  txt += 'App: Meu Salão — Grupo Boticário\n';
+  txt += 'Gerado em: ' + new Date().toLocaleString('pt-BR') + '\n\n';
+
+  testesHistorico.forEach(r => {
+    txt += '─────────────────────────────\n';
+    txt += 'TESTE #' + r.teste + '\n';
+    txt += 'Início: ' + new Date(r.inicio).toLocaleString('pt-BR') + '\n';
+    txt += 'Duração total: ' + formatMs(r.duracaoTotal) + '\n';
+    const conc = r.tarefas.filter(t=>t.concluida).length;
+    txt += 'Tarefas concluídas: ' + conc + '/6\n\n';
+    r.tarefas.forEach((t, i) => {
+      txt += (i+1) + '. ' + t.nome + '\n';
+      txt += '   Status: ' + (t.concluida ? 'Concluída' : 'NÃO concluída') + '\n';
+      txt += '   Tempo: ' + formatMs(t.tempo) + '\n';
+      txt += '   Telas visitadas: ' + t.cliques + '\n';
+      if (t.telas.length) txt += '   Caminho: ' + t.telas.join(' → ') + '\n';
+      txt += '\n';
+    });
+    txt += 'Telas mais acessadas:\n';
+    r.maisVisitadas.forEach(([tela, n]) => {
+      txt += '   ' + tela + ': ' + n + 'x\n';
+    });
+    txt += '\n';
+  });
+
+  // download
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'relatorio-usabilidade-salao.txt';
+  a.click();
+}
+
+// ───────────────────────────────────────────────
+// CONTROLES DE SESSÃO
+// ───────────────────────────────────────────────
+function fazerLogin() {
+  ir('home');
+}
+
+function novoTeste() {
+  testeNum++;
+  document.getElementById('testLabel').textContent = 'Teste #' + testeNum;
+  for (let i = 0; i < 6; i++) {
+    const num = document.getElementById('cn' + i);
+    const txt = document.getElementById('ct' + i);
+    if (num) { num.classList.remove('done'); num.textContent = i+1; }
+    if (txt) txt.classList.remove('done');
+  }
+  document.getElementById('pFill').style.width = '0%';
+  document.getElementById('pTxt').textContent = '0 de 6 concluídas';
+  const nn = document.getElementById('novoNome');
+  if (nn) nn.value = '';
+  iniciarTeste();
+  ir('login');
+}
+
+// ───────────────────────────────────────────────
+// FUNÇÕES DE TELA
+// ───────────────────────────────────────────────
+function salvarCliente() {
+  const nome = document.getElementById('novoNome').value || 'Nova Cliente';
+  document.getElementById('successClienteNome').textContent = nome + ' foi adicionada à sua lista de clientes.';
+  ir('cliente-sucesso');
+}
+
+function selPag(btn) {
+  btn.parentElement.querySelectorAll('button').forEach(b => {
+    b.style.borderColor = '#e0e0e0'; b.style.background = '#fff'; b.style.color = '#555';
+  });
+  btn.style.borderColor = '#1D9E75'; btn.style.background = '#E1F5EE'; btn.style.color = '#085041';
+}
+
+function changeQty(btn, delta) {
+  const ctrl = btn.parentElement;
+  const span = ctrl.querySelector('.qty-val');
+  let v = parseInt(span.textContent) + delta;
+  if (v < 0) v = 0;
+  span.textContent = v;
+  recalcTotal();
+}
+
+function recalcTotal() {
+  const rows = document.querySelectorAll('#screen-reposicao .product-row');
+  const prices = [42.90, 78.00, 55.50];
+  let total = 18;
+  rows.forEach((r, i) => {
+    const q = r.querySelector('.qty-val');
+    if (q) total += parseInt(q.textContent) * prices[i];
+  });
+  document.getElementById('totalPedido').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+}
+
+// ───────────────────────────────────────────────
+// RELÓGIO
+// ───────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  const h = String(n.getHours()).padStart(2,'0');
+  const m = String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = h + ':' + m;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ───────────────────────────────────────────────
+// INICIALIZAÇÃO
+// ───────────────────────────────────────────────
+iniciarTeste();
+</script>
+</body>
+</html>
