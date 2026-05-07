@@ -945,7 +945,7 @@ const telaConclusaoTarefa = {
 };
 
 function iniciarTeste() {
-  testeInicio = Date.now();
+  testeInicio = null; // será definido no login
   taskDone    = [false,false,false,false,false,false];
   taskInicio  = [null,null,null,null,null,null];
   taskFim     = [null,null,null,null,null,null];
@@ -954,7 +954,7 @@ function iniciarTeste() {
   logNavegacao = [];
   telaAtual   = 'login';
   telaAnterior = null;
-  testeAtual  = { num: testeNum, inicio: new Date().toISOString() };
+  testeAtual  = { num: testeNum, inicio: null };
 }
 
 function ir(id) {
@@ -1259,6 +1259,8 @@ function exportarTexto() {
 // CONTROLES DE SESSÃO
 // ───────────────────────────────────────────────
 function fazerLogin() {
+  testeInicio = Date.now();
+  testeAtual = { num: testeNum, inicio: new Date().toISOString() };
   ir('home');
 }
 
