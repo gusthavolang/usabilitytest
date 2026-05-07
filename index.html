@@ -8,10 +8,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #e8e8e8; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 48px; }
 
-  /* ── Layout desktop: lado a lado centralizado ── */
-  .outer { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 32px; width: 100%; }
-  .phone-col { display: flex; flex-direction: column; align-items: center; gap: 16px; order: 2; }
-  .tasks-panel { order: 1; }
+  /* ── Layout desktop: celular centralizado, painel fixo à esquerda ── */
+  .outer { display: flex; justify-content: center; align-items: flex-start; width: 100%; }
+  .phone-col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .tasks-panel { width: 260px; background: #fff; border-radius: 16px; border: 0.5px solid #ddd; padding: 16px;
+    position: fixed; top: 32px; left: max(16px, calc(50% - 160px - 32px - 260px)); }
 
   /* ── Header strip ── */
   .test-strip { width: 320px; display: flex; align-items: center; justify-content: space-between; }
@@ -20,7 +21,6 @@
   .new-test-btn:hover { opacity: 0.85; }
 
   /* ── Painel lateral (desktop) ── */
-  .tasks-panel { width: 280px; background: #fff; border-radius: 16px; border: 0.5px solid #ddd; padding: 16px; position: sticky; top: 32px; }
   .tasks-panel-title { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
   .task-chips { display: flex; flex-direction: column; gap: 7px; }
   .task-chip { display: flex; align-items: center; gap: 9px; }
