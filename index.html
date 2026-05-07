@@ -182,14 +182,19 @@
   .qty-ctrl .qty-val { font-size: 14px; font-weight: 700; color: #1a1a1a; }
 
   /* ── SUS Scale ── */
-  .sus-scale { display: flex; gap: 4px; margin-top: 4px; }
-  .sus-scale button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; border: 1.5px solid #e0e0e0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.15s; touch-action: manipulation; min-height: 54px; }
-  .sus-scale button:active { transform: scale(0.95); }
-  .sus-scale button.selected { border-color: #1D9E75; background: #E1F5EE; }
-  .sus-scale button > :first-child { font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1; }
-  .sus-scale button.selected > :first-child { color: #085041; }
-  .sus-scale button span { font-size: 8px; color: #aaa; text-align: center; line-height: 1.3; }
-  .sus-scale button.selected span { color: #0F6E56; }
+  .sus-card { background: #fff; border: 0.5px solid #e8e8e8; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .sus-card.answered { border-color: #9FE1CB; background: #f7fefc; }
+  .sus-q-label { font-size: 10px; font-weight: 700; color: #1D9E75; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sus-q-text { font-size: 12px; color: #1a1a1a; line-height: 1.45; }
+  .sus-scale { display: flex; align-items: center; gap: 0; margin-top: 4px; }
+  .sus-scale button { flex: 1; width: 0; height: 38px; border: 2px solid #999; border-radius: 0; background: #fff; cursor: pointer; font-size: 13px; font-weight: 700; color: #333; transition: all 0.15s; touch-action: manipulation; position: relative; }
+  .sus-scale button:first-child { border-radius: 10px 0 0 10px; }
+  .sus-scale button:last-child  { border-radius: 0 10px 10px 0; }
+  .sus-scale button:not(:first-child) { border-left: none; }
+  .sus-scale button:active { transform: scale(0.93); z-index: 1; }
+  .sus-scale button.selected { background: #1D9E75; border-color: #1D9E75; color: #fff; z-index: 1; }
+  .sus-anchors { display: flex; justify-content: space-between; margin-top: 4px; }
+  .sus-anchors span { font-size: 10px; color: #666; font-weight: 500; }
 </style>
 </head>
 <body>
@@ -772,83 +777,81 @@
 
     <!-- ═══════════ AVALIAÇÃO SUS ═══════════ -->
     <div class="screen" id="screen-avaliacao">
-      <div class="s-header">
-        <div class="title">Avaliação rápida</div>
-        <div class="sub">Só mais um momento — 5 perguntas</div>
+      <div style="background:#1D9E75;padding:16px 16px 14px;flex-shrink:0;">
+        <div style="font-size:10px;font-weight:700;color:#9FE1CB;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Quase lá!</div>
+        <div style="font-size:17px;font-weight:700;color:#fff;line-height:1.3;">Como foi sua experiência?</div>
+        <div style="font-size:12px;color:#9FE1CB;margin-top:3px;">5 perguntas rápidas sobre o que você usou</div>
+        <div style="display:flex;gap:4px;margin-top:12px;">
+          <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.3);" id="sdot0"></div>
+          <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.3);" id="sdot1"></div>
+          <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.3);" id="sdot2"></div>
+          <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.3);" id="sdot3"></div>
+          <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.3);" id="sdot4"></div>
+        </div>
       </div>
-      <div class="scroll" style="gap:12px;">
-
-        <div style="background:#E1F5EE;border-radius:12px;padding:12px 14px;">
-          <div style="font-size:12px;color:#085041;font-weight:500;line-height:1.5;">Você concluiu todas as tarefas! Com base no que acabou de fazer, responda rapidamente:</div>
-        </div>
-
-        <!-- Q1 -->
-        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
-          <div style="font-size:12px;font-weight:600;color:#1D9E75;">1. Uso no dia a dia</div>
-          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Eu usaria esse sistema com frequência no meu salão."</div>
+      <div class="scroll" style="gap:8px;">
+        <div class="sus-card" id="suscard0">
+          <div class="sus-q-label">1 · Uso no dia a dia</div>
+          <div class="sus-q-text">"Eu usaria esse sistema com frequência no meu salão."</div>
           <div class="sus-scale" id="sus0">
-            <button onclick="selSUS(0,1)">1<span>Discordo totalmente</span></button>
-            <button onclick="selSUS(0,2)">2<span>Discordo</span></button>
-            <button onclick="selSUS(0,3)">3<span>Neutro</span></button>
-            <button onclick="selSUS(0,4)">4<span>Concordo</span></button>
-            <button onclick="selSUS(0,5)">5<span>Concordo totalmente</span></button>
+            <button onclick="selSUS(0,1)">1</button>
+            <button onclick="selSUS(0,2)">2</button>
+            <button onclick="selSUS(0,3)">3</button>
+            <button onclick="selSUS(0,4)">4</button>
+            <button onclick="selSUS(0,5)">5</button>
           </div>
+          <div class="sus-anchors"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>
         </div>
-
-        <!-- Q2 -->
-        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
-          <div style="font-size:12px;font-weight:600;color:#1D9E75;">2. Facilidade geral</div>
-          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"De forma geral, achei o sistema fácil de usar ao realizar as tarefas."</div>
+        <div class="sus-card" id="suscard1">
+          <div class="sus-q-label">2 · Facilidade geral</div>
+          <div class="sus-q-text">"De forma geral, achei o sistema fácil de usar ao realizar as tarefas."</div>
           <div class="sus-scale" id="sus1">
-            <button onclick="selSUS(1,1)">1<span>Discordo totalmente</span></button>
-            <button onclick="selSUS(1,2)">2<span>Discordo</span></button>
-            <button onclick="selSUS(1,3)">3<span>Neutro</span></button>
-            <button onclick="selSUS(1,4)">4<span>Concordo</span></button>
-            <button onclick="selSUS(1,5)">5<span>Concordo totalmente</span></button>
+            <button onclick="selSUS(1,1)">1</button>
+            <button onclick="selSUS(1,2)">2</button>
+            <button onclick="selSUS(1,3)">3</button>
+            <button onclick="selSUS(1,4)">4</button>
+            <button onclick="selSUS(1,5)">5</button>
           </div>
+          <div class="sus-anchors"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>
         </div>
-
-        <!-- Q3 -->
-        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
-          <div style="font-size:12px;font-weight:600;color:#1D9E75;">3. Complexidade</div>
-          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Achei o sistema mais complicado do que deveria para realizar essas tarefas."</div>
+        <div class="sus-card" id="suscard2">
+          <div class="sus-q-label">3 · Complexidade</div>
+          <div class="sus-q-text">"Achei o sistema mais complicado do que deveria para realizar essas tarefas."</div>
           <div class="sus-scale" id="sus2">
-            <button onclick="selSUS(2,1)">1<span>Discordo totalmente</span></button>
-            <button onclick="selSUS(2,2)">2<span>Discordo</span></button>
-            <button onclick="selSUS(2,3)">3<span>Neutro</span></button>
-            <button onclick="selSUS(2,4)">4<span>Concordo</span></button>
-            <button onclick="selSUS(2,5)">5<span>Concordo totalmente</span></button>
+            <button onclick="selSUS(2,1)">1</button>
+            <button onclick="selSUS(2,2)">2</button>
+            <button onclick="selSUS(2,3)">3</button>
+            <button onclick="selSUS(2,4)">4</button>
+            <button onclick="selSUS(2,5)">5</button>
           </div>
+          <div class="sus-anchors"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>
         </div>
-
-        <!-- Q4 -->
-        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
-          <div style="font-size:12px;font-weight:600;color:#1D9E75;">4. Autonomia no uso</div>
-          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Consegui realizar as tarefas sem precisar de ajuda."</div>
+        <div class="sus-card" id="suscard3">
+          <div class="sus-q-label">4 · Autonomia no uso</div>
+          <div class="sus-q-text">"Consegui realizar as tarefas sem precisar de ajuda."</div>
           <div class="sus-scale" id="sus3">
-            <button onclick="selSUS(3,1)">1<span>Discordo totalmente</span></button>
-            <button onclick="selSUS(3,2)">2<span>Discordo</span></button>
-            <button onclick="selSUS(3,3)">3<span>Neutro</span></button>
-            <button onclick="selSUS(3,4)">4<span>Concordo</span></button>
-            <button onclick="selSUS(3,5)">5<span>Concordo totalmente</span></button>
+            <button onclick="selSUS(3,1)">1</button>
+            <button onclick="selSUS(3,2)">2</button>
+            <button onclick="selSUS(3,3)">3</button>
+            <button onclick="selSUS(3,4)">4</button>
+            <button onclick="selSUS(3,5)">5</button>
           </div>
+          <div class="sus-anchors"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>
         </div>
-
-        <!-- Q5 -->
-        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
-          <div style="font-size:12px;font-weight:600;color:#1D9E75;">5. Confiança</div>
-          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Me senti confiante ao usar o sistema durante as tarefas."</div>
+        <div class="sus-card" id="suscard4">
+          <div class="sus-q-label">5 · Confiança</div>
+          <div class="sus-q-text">"Me senti confiante ao usar o sistema durante as tarefas."</div>
           <div class="sus-scale" id="sus4">
-            <button onclick="selSUS(4,1)">1<span>Discordo totalmente</span></button>
-            <button onclick="selSUS(4,2)">2<span>Discordo</span></button>
-            <button onclick="selSUS(4,3)">3<span>Neutro</span></button>
-            <button onclick="selSUS(4,4)">4<span>Concordo</span></button>
-            <button onclick="selSUS(4,5)">5<span>Concordo totalmente</span></button>
+            <button onclick="selSUS(4,1)">1</button>
+            <button onclick="selSUS(4,2)">2</button>
+            <button onclick="selSUS(4,3)">3</button>
+            <button onclick="selSUS(4,4)">4</button>
+            <button onclick="selSUS(4,5)">5</button>
           </div>
+          <div class="sus-anchors"><span>Discordo totalmente</span><span>Concordo totalmente</span></div>
         </div>
-
-        <button class="btn-primary" id="btnEnviarSUS" onclick="enviarSUS()" style="opacity:0.4;pointer-events:none;">Ver resultado</button>
-        <div style="font-size:11px;color:#aaa;text-align:center;margin-top:-4px;">Responda todas as perguntas para continuar</div>
+        <button class="btn-primary" id="btnEnviarSUS" onclick="enviarSUS()" style="opacity:0.4;pointer-events:none;">Finalizar</button>
+        <div style="font-size:11px;color:#bbb;text-align:center;margin-top:-4px;padding-bottom:4px;">Responda todas para continuar</div>
       </div>
     </div>
 
@@ -864,9 +867,8 @@
       </div>
       <div class="scroll" id="relatorioConteudo" style="gap:0;padding-bottom:8px;">
       </div>
-      <div style="padding:12px 14px;background:#fff;border-top:0.5px solid #eee;flex-shrink:0;display:flex;gap:8px;">
-        <button class="btn-primary" onclick="novoTeste()" style="flex:1;font-size:13px;padding:12px;">Novo teste</button>
-        <button class="btn-outline" onclick="ir('home')" style="flex:1;font-size:13px;padding:12px;">Continuar</button>
+      <div style="padding:12px 14px;background:#fff;border-top:0.5px solid #eee;flex-shrink:0;">
+        <button class="btn-primary" onclick="novoTeste()" style="width:100%;font-size:14px;padding:13px;">Iniciar novo teste</button>
       </div>
     </div>
 
@@ -885,8 +887,6 @@
     </div>
     <div class="progress-wrap"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
     <div class="progress-txt" id="pTxt">0 de 6 concluídas</div>
-    <button onclick="gerarRelatorio()" style="margin-top:14px;width:100%;background:#1a1a1a;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Ver relatório deste teste</button>
-    <button onclick="exportarTexto()" style="margin-top:6px;width:100%;background:#fff;color:#1a1a1a;border:1px solid #ddd;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">⬇ Exportar todos os testes (.txt)</button>
   </div>
 
 </div><!-- /outer -->
@@ -1036,6 +1036,10 @@ function gerarRelatorio() {
     // limpa seleções visuais
     for (let i = 0; i < 5; i++) {
       document.querySelectorAll('#sus' + i + ' button').forEach(b => b.classList.remove('selected'));
+      const card = document.getElementById('suscard' + i);
+      if (card) card.classList.remove('answered');
+      const dot = document.getElementById('sdot' + i);
+      if (dot) dot.style.background = 'rgba(255,255,255,0.3)';
     }
     document.getElementById('btnEnviarSUS').style.opacity = '0.4';
     document.getElementById('btnEnviarSUS').style.pointerEvents = 'none';
@@ -1109,10 +1113,15 @@ let registroAtual = null;
 
 function selSUS(pergunta, valor) {
   susRespostas[pergunta] = valor;
-  // atualiza visual
+  // atualiza visual dos botões
   document.querySelectorAll('#sus' + pergunta + ' button').forEach(b => b.classList.remove('selected'));
-  const btns = document.querySelectorAll('#sus' + pergunta + ' button');
-  btns[valor - 1].classList.add('selected');
+  document.querySelectorAll('#sus' + pergunta + ' button')[valor - 1].classList.add('selected');
+  // marca card como respondido
+  const card = document.getElementById('suscard' + pergunta);
+  if (card) card.classList.add('answered');
+  // acende bolinha de progresso
+  const dot = document.getElementById('sdot' + pergunta);
+  if (dot) dot.style.background = '#fff';
   // habilita botão se todas respondidas
   const todasRespondidas = susRespostas.every(r => r !== null);
   const btn = document.getElementById('btnEnviarSUS');
