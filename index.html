@@ -124,8 +124,9 @@
   .product-info { flex: 1; min-width: 0; }
   .product-info .pname { font-size: 13px; font-weight: 500; color: #1a1a1a; }
   .product-qty { font-size: 12px; color: #555; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .repor-btn { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 9px 14px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; white-space: nowrap; }
+  .repor-btn { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; white-space: nowrap; min-height: 44px; min-width: 64px; touch-action: manipulation; }
   .repor-btn:hover { opacity: 0.85; }
+  .repor-btn:active { opacity: 0.65; transform: scale(0.97); }
 
   .lançamento-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0f0f0; }
   .lançamento-row:last-child { border-bottom: none; }
@@ -167,16 +168,28 @@
   .toggle-row:last-child { border-bottom: none; }
   .toggle-label { font-size: 13px; color: #1a1a1a; font-weight: 500; }
   .toggle-sub { font-size: 11px; color: #999; margin-top: 2px; }
-  .toggle { width: 44px; height: 24px; border-radius: 12px; background: #1D9E75; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
-  .toggle::after { content: ''; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; transition: right 0.2s; }
+  .toggle { width: 44px; height: 28px; border-radius: 14px; background: #1D9E75; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s, opacity 0.15s; touch-action: manipulation; min-height: 44px; display: flex; align-items: center; padding: 0 3px; }
+  .toggle::after { content: ''; width: 22px; height: 22px; border-radius: 50%; background: white; transition: transform 0.2s; transform: translateX(16px); }
   .toggle.off { background: #d0d0d0; }
-  .toggle.off::after { right: auto; left: 3px; }
+  .toggle.off::after { transform: translateX(0); }
+  .toggle:active { opacity: 0.75; }
 
   .qty-ctrl { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-  .qty-ctrl button { width: 28px; height: 28px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; line-height: 1; }
+  .qty-ctrl button { width: 44px; height: 44px; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; line-height: 1; touch-action: manipulation; transition: opacity 0.15s, transform 0.1s; }
+  .qty-ctrl button:active { opacity: 0.65; transform: scale(0.92); }
   .qty-ctrl .qty-minus { background: #f0f0f0; color: #555; }
   .qty-ctrl .qty-plus { background: #1D9E75; color: #fff; }
   .qty-ctrl .qty-val { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+
+  /* ── SUS Scale ── */
+  .sus-scale { display: flex; gap: 4px; margin-top: 4px; }
+  .sus-scale button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; border: 1.5px solid #e0e0e0; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.15s; touch-action: manipulation; min-height: 54px; }
+  .sus-scale button:active { transform: scale(0.95); }
+  .sus-scale button.selected { border-color: #1D9E75; background: #E1F5EE; }
+  .sus-scale button > :first-child { font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1; }
+  .sus-scale button.selected > :first-child { color: #085041; }
+  .sus-scale button span { font-size: 8px; color: #aaa; text-align: center; line-height: 1.3; }
+  .sus-scale button.selected span { color: #0F6E56; }
 </style>
 </head>
 <body>
@@ -757,6 +770,88 @@
       </div>
     </div>
 
+    <!-- ═══════════ AVALIAÇÃO SUS ═══════════ -->
+    <div class="screen" id="screen-avaliacao">
+      <div class="s-header">
+        <div class="title">Avaliação rápida</div>
+        <div class="sub">Só mais um momento — 5 perguntas</div>
+      </div>
+      <div class="scroll" style="gap:12px;">
+
+        <div style="background:#E1F5EE;border-radius:12px;padding:12px 14px;">
+          <div style="font-size:12px;color:#085041;font-weight:500;line-height:1.5;">Você concluiu todas as tarefas! Com base no que acabou de fazer, responda rapidamente:</div>
+        </div>
+
+        <!-- Q1 -->
+        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
+          <div style="font-size:12px;font-weight:600;color:#1D9E75;">1. Uso no dia a dia</div>
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Eu usaria esse sistema com frequência no meu salão."</div>
+          <div class="sus-scale" id="sus0">
+            <button onclick="selSUS(0,1)">1<span>Discordo totalmente</span></button>
+            <button onclick="selSUS(0,2)">2<span>Discordo</span></button>
+            <button onclick="selSUS(0,3)">3<span>Neutro</span></button>
+            <button onclick="selSUS(0,4)">4<span>Concordo</span></button>
+            <button onclick="selSUS(0,5)">5<span>Concordo totalmente</span></button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
+          <div style="font-size:12px;font-weight:600;color:#1D9E75;">2. Facilidade geral</div>
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"De forma geral, achei o sistema fácil de usar ao realizar as tarefas."</div>
+          <div class="sus-scale" id="sus1">
+            <button onclick="selSUS(1,1)">1<span>Discordo totalmente</span></button>
+            <button onclick="selSUS(1,2)">2<span>Discordo</span></button>
+            <button onclick="selSUS(1,3)">3<span>Neutro</span></button>
+            <button onclick="selSUS(1,4)">4<span>Concordo</span></button>
+            <button onclick="selSUS(1,5)">5<span>Concordo totalmente</span></button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
+          <div style="font-size:12px;font-weight:600;color:#1D9E75;">3. Complexidade</div>
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Achei o sistema mais complicado do que deveria para realizar essas tarefas."</div>
+          <div class="sus-scale" id="sus2">
+            <button onclick="selSUS(2,1)">1<span>Discordo totalmente</span></button>
+            <button onclick="selSUS(2,2)">2<span>Discordo</span></button>
+            <button onclick="selSUS(2,3)">3<span>Neutro</span></button>
+            <button onclick="selSUS(2,4)">4<span>Concordo</span></button>
+            <button onclick="selSUS(2,5)">5<span>Concordo totalmente</span></button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
+          <div style="font-size:12px;font-weight:600;color:#1D9E75;">4. Autonomia no uso</div>
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Consegui realizar as tarefas sem precisar de ajuda."</div>
+          <div class="sus-scale" id="sus3">
+            <button onclick="selSUS(3,1)">1<span>Discordo totalmente</span></button>
+            <button onclick="selSUS(3,2)">2<span>Discordo</span></button>
+            <button onclick="selSUS(3,3)">3<span>Neutro</span></button>
+            <button onclick="selSUS(3,4)">4<span>Concordo</span></button>
+            <button onclick="selSUS(3,5)">5<span>Concordo totalmente</span></button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="card" style="gap:8px;display:flex;flex-direction:column;">
+          <div style="font-size:12px;font-weight:600;color:#1D9E75;">5. Confiança</div>
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5;">"Me senti confiante ao usar o sistema durante as tarefas."</div>
+          <div class="sus-scale" id="sus4">
+            <button onclick="selSUS(4,1)">1<span>Discordo totalmente</span></button>
+            <button onclick="selSUS(4,2)">2<span>Discordo</span></button>
+            <button onclick="selSUS(4,3)">3<span>Neutro</span></button>
+            <button onclick="selSUS(4,4)">4<span>Concordo</span></button>
+            <button onclick="selSUS(4,5)">5<span>Concordo totalmente</span></button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btnEnviarSUS" onclick="enviarSUS()" style="opacity:0.4;pointer-events:none;">Ver resultado</button>
+        <div style="font-size:11px;color:#aaa;text-align:center;margin-top:-4px;">Responda todas as perguntas para continuar</div>
+      </div>
+    </div>
+
     <!-- ═══════════ RELATÓRIO ═══════════ -->
     <div class="screen" id="screen-relatorio">
       <div class="s-header">
@@ -933,35 +1028,52 @@ function formatMs(ms) {
 }
 
 function gerarRelatorio() {
+  const todasConcluidas = taskDone.every(Boolean);
+  if (todasConcluidas) {
+    // guarda snapshot para usar depois do SUS
+    registroAtual = prepararRegistro();
+    susRespostas = [null, null, null, null, null];
+    // limpa seleções visuais
+    for (let i = 0; i < 5; i++) {
+      document.querySelectorAll('#sus' + i + ' button').forEach(b => b.classList.remove('selected'));
+    }
+    document.getElementById('btnEnviarSUS').style.opacity = '0.4';
+    document.getElementById('btnEnviarSUS').style.pointerEvents = 'none';
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-avaliacao').classList.add('active');
+  } else {
+    finalizarRelatorio(prepararRegistro());
+  }
+}
+
+// ── Monta o objeto de registro com os dados do teste atual ──
+function prepararRegistro() {
   const agora = Date.now();
   const duracaoTotal = agora - testeInicio;
-
-  // telas mais visitadas
   const contagem = {};
   logNavegacao.forEach(e => { contagem[e.tela] = (contagem[e.tela]||0)+1; });
   const maisVisitadas = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  // caminhos das tarefas
   const linhasTarefas = TAREFAS.map((nome, i) => {
     const concluida = taskDone[i];
     const tempo = (taskInicio[i] && taskFim[i]) ? taskFim[i] - taskInicio[i] : null;
     const telas = taskTelas[i];
-    const cliques = telas.length;
-    return { nome, concluida, tempo, telas, cliques };
+    return { nome, concluida, tempo, telas, cliques: telas.length };
   });
-
-  // salvar no histórico
-  const registro = {
+  return {
     teste: testeNum,
     inicio: testeAtual?.inicio || '—',
     duracaoTotal,
     tarefas: linhasTarefas,
     logNavegacao: [...logNavegacao],
-    maisVisitadas
+    maisVisitadas,
+    sus: null
   };
+}
+
+// ── Finaliza: salva, envia ao Sheets e exibe o relatório ──
+function finalizarRelatorio(registro) {
   testesHistorico.push(registro);
 
-  // ── Enviar para Google Sheets ──
   const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwppbri8IMyEZ7tjlniDXCfr7Rf2KyyMgPUkDo62e93aKQ7kwDLH_zC9mbAlGRw4047aA/exec';
   const payload = {
     teste: registro.teste,
@@ -974,20 +1086,59 @@ function gerarRelatorio() {
       tempo: formatMs(t.tempo),
       telas: t.telas
     })),
-    maisVisitadas: registro.maisVisitadas
+    maisVisitadas: registro.maisVisitadas,
+    sus: registro.sus
   };
   fetch(SHEETS_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  }).catch(() => {}); // silencia erros de rede — dados locais continuam disponíveis
+  }).catch(() => {});
 
   document.getElementById('relatorioTitulo').textContent = 'Relatório — Teste #' + testeNum;
   document.getElementById('relatorioData').textContent = new Date().toLocaleString('pt-BR');
   renderRelatorio(registro);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-relatorio').classList.add('active');
+}
+
+// ── SUS ──
+let susRespostas = [null, null, null, null, null];
+let registroAtual = null;
+
+function selSUS(pergunta, valor) {
+  susRespostas[pergunta] = valor;
+  // atualiza visual
+  document.querySelectorAll('#sus' + pergunta + ' button').forEach(b => b.classList.remove('selected'));
+  const btns = document.querySelectorAll('#sus' + pergunta + ' button');
+  btns[valor - 1].classList.add('selected');
+  // habilita botão se todas respondidas
+  const todasRespondidas = susRespostas.every(r => r !== null);
+  const btn = document.getElementById('btnEnviarSUS');
+  btn.style.opacity = todasRespondidas ? '1' : '0.4';
+  btn.style.pointerEvents = todasRespondidas ? 'auto' : 'none';
+}
+
+function calcularSUS(respostas) {
+  // Q1, Q2, Q4, Q5 = positivas: (valor - 1) * 2.5
+  // Q3 = invertida: (5 - valor) * 2.5
+  // soma * 100 / 100 = média em 0-100
+  const pesos = [1, 1, -1, 1, 1]; // -1 = invertida
+  let soma = 0;
+  respostas.forEach((r, i) => {
+    soma += pesos[i] === 1 ? (r - 1) : (5 - r);
+  });
+  return Math.round(soma * 2.5);
+}
+
+function enviarSUS() {
+  if (susRespostas.some(r => r === null)) return;
+  registroAtual.sus = {
+    respostas: [...susRespostas],
+    score: calcularSUS(susRespostas)
+  };
+  finalizarRelatorio(registroAtual);
 }
 
 function renderRelatorio(r) {
@@ -1025,6 +1176,17 @@ function renderRelatorio(r) {
         <div style="font-size:12px;color:#555;">Telas navegadas: <span style="font-weight:700;color:#1a1a1a;">${r.logNavegacao.length}</span></div>
       </div>
     </div>
+    ${r.sus ? `
+    <div style="background:#E1F5EE;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:11px;color:#085041;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Score SUS</div>
+        <div style="font-size:28px;font-weight:700;color:#085041;">${r.sus.score}<span style="font-size:14px;font-weight:500;color:#0F6E56;"> / 100</span></div>
+        <div style="font-size:11px;color:#0F6E56;margin-top:2px;">${r.sus.score >= 85 ? 'Excelente' : r.sus.score >= 72 ? 'Bom' : r.sus.score >= 52 ? 'Aceitável' : 'Precisa melhorar'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
+        ${r.sus.respostas.map((v,i) => `<div style="font-size:10px;color:#0F6E56;">Q${i+1}: ${v}</div>`).join('')}
+      </div>
+    </div>` : ''}
     <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Por tarefa</div>
     ${tarefasHTML}
     <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.05em;margin:14px 0 8px;">Telas mais acessadas</div>
@@ -1060,6 +1222,14 @@ function exportarTexto() {
     r.maisVisitadas.forEach(([tela, n]) => {
       txt += '   ' + tela + ': ' + n + 'x\n';
     });
+    if (r.sus) {
+      txt += '\nAvaliação SUS:\n';
+      txt += '   Score: ' + r.sus.score + '/100\n';
+      const labels = ['Uso no dia a dia','Facilidade geral','Complexidade (invertida)','Autonomia no uso','Confiança'];
+      r.sus.respostas.forEach((v, i) => {
+        txt += '   Q' + (i+1) + ' ' + labels[i] + ': ' + v + '\n';
+      });
+    }
     txt += '\n';
   });
 
