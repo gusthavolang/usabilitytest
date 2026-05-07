@@ -378,11 +378,11 @@
         <div style="display:flex;gap:8px;">
           <div class="input-group" style="flex:1">
             <label class="input-label">Data</label>
-            <input class="input-field" type="text" value="06/05/2025" style="background:#f7f7f7;">
+            <input class="input-field fmt-data" id="agendaData" type="text" placeholder="DD/MM/AAAA" maxlength="10" style="background:#f7f7f7;">
           </div>
           <div class="input-group" style="flex:1">
             <label class="input-label">Horário</label>
-            <input class="input-field" type="text" placeholder="09h00" style="background:#f7f7f7;">
+            <input class="input-field fmt-hora" id="agendaHora" type="text" placeholder="09:00" maxlength="5" style="background:#f7f7f7;">
           </div>
         </div>
         <div class="card-gray" style="display:flex;align-items:center;gap:10px;">
@@ -464,11 +464,11 @@
         </div>
         <div class="input-group">
           <label class="input-label">Telefone (WhatsApp)</label>
-          <input class="input-field" type="tel" placeholder="(11) 99999-0000">
+          <input class="input-field fmt-tel" id="novoTel" type="tel" placeholder="(11) 99999-0000" maxlength="15">
         </div>
         <div class="input-group">
           <label class="input-label">Aniversário (opcional)</label>
-          <input class="input-field" type="text" placeholder="DD/MM">
+          <input class="input-field fmt-data-curta" id="novoAniversario" type="text" placeholder="DD/MM" maxlength="5">
         </div>
         <button class="btn-primary" onclick="salvarCliente()">Salvar cliente</button>
         <div class="link-text" style="margin-top:-4px;">Só nome e telefone são obrigatórios</div>
@@ -582,7 +582,7 @@
         </div>
         <div class="input-group">
           <label class="input-label">Valor recebido</label>
-          <input class="input-field" type="text" placeholder="R$ 0,00" style="font-size:20px;font-weight:700;color:#1D9E75;">
+          <input class="input-field fmt-moeda" id="pagValor" type="text" placeholder="R$ 0,00" inputmode="numeric" style="font-size:20px;font-weight:700;color:#1D9E75;">
         </div>
         <div class="input-group">
           <label class="input-label">Como foi pago?</label>
@@ -1323,9 +1323,78 @@ updateClock();
 setInterval(updateClock, 10000);
 
 // ───────────────────────────────────────────────
-// INICIALIZAÇÃO
+// FORMATAÇÃO DE CAMPOS
 // ───────────────────────────────────────────────
-iniciarTeste();
+
+function aplicarFormatacoes() {
+
+  // ── TELEFONE: (11) 99999-0000 — máx 11 dígitos ──
+  document.querySelectorAll('.fmt-tel').forEach(el => {
+    el.addEventListener('input', function () {
+      let digits = this.value.replace(/\D/g, '').slice(0, 11);
+      let fmt = '';
+      if (digits.length === 0) { this.value = ''; return; }
+      if (digits.length <= 2)        fmt = '(' + digits;
+      else if (digits.length <= 6)   fmt = '(' + digits.slice(0,2) + ') ' + digits.slice(2);
+      else if (digits.length <= 10)  fmt = '(' + digits.slice(0,2) + ') ' + digits.slice(2,6) + '-' + digits.slice(6);
+      else                           fmt = '(' + digits.slice(0,2) + ') ' + digits.slice(2,7) + '-' + digits.slice(7);
+      this.value = fmt;
+    });
+  });
+
+  // ── DATA COMPLETA: DD/MM/AAAA ──
+  document.querySelectorAll('.fmt-data').forEach(el => {
+    el.addEventListener('input', function () {
+      let digits = this.value.replace(/\D/g, '').slice(0, 8);
+      let fmt = digits;
+      if (digits.length > 4) fmt = digits.slice(0,2) + '/' + digits.slice(2,4) + '/' + digits.slice(4);
+      else if (digits.length > 2) fmt = digits.slice(0,2) + '/' + digits.slice(2);
+      this.value = fmt;
+    });
+  });
+
+  // ── DATA CURTA: DD/MM ──
+  document.querySelectorAll('.fmt-data-curta').forEach(el => {
+    el.addEventListener('input', function () {
+      let digits = this.value.replace(/\D/g, '').slice(0, 4);
+      let fmt = digits.length > 2 ? digits.slice(0,2) + '/' + digits.slice(2) : digits;
+      this.value = fmt;
+    });
+  });
+
+  // ── HORÁRIO: HH:MM ──
+  document.querySelectorAll('.fmt-hora').forEach(el => {
+    el.addEventListener('input', function () {
+      let digits = this.value.replace(/\D/g, '').slice(0, 4);
+      let fmt = digits.length > 2 ? digits.slice(0,2) + ':' + digits.slice(2) : digits;
+      this.value = fmt;
+    });
+  });
+
+  // ── MOEDA: R$ 0,00 ──
+  document.querySelectorAll('.fmt-moeda').forEach(el => {
+    el.addEventListener('input', function () {
+      let digits = this.value.replace(/\D/g, '');
+      if (digits === '' || digits === '0') { this.value = ''; return; }
+      let num = parseInt(digits, 10);
+      let reais = Math.floor(num / 100);
+      let centavos = num % 100;
+      let reaisStr = reais.toLocaleString('pt-BR');
+      this.value = 'R$ ' + reaisStr + ',' + String(centavos).padStart(2, '0');
+    });
+    el.addEventListener('focus', function () {
+      if (this.value === '') this.value = 'R$ 0,00';
+    });
+    el.addEventListener('blur', function () {
+      if (this.value === 'R$ 0,00') this.value = '';
+    });
+  });
+}
+
+// aplica após o DOM estar pronto
+document.addEventListener('DOMContentLoaded', aplicarFormatacoes);
+// garante aplicação mesmo se DOMContentLoaded já disparou
+if (document.readyState !== 'loading') aplicarFormatacoes();
 </script>
 </body>
 </html>
