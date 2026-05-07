@@ -8,16 +8,18 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #e8e8e8; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px 48px; }
 
-  .outer { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; }
+  /* ── Layout desktop: lado a lado ── */
+  .outer { display: flex; flex-direction: row; align-items: flex-start; justify-content: center; gap: 32px; width: 100%; }
+  .phone-col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
-  /* header strip above phone */
+  /* ── Header strip ── */
   .test-strip { width: 320px; display: flex; align-items: center; justify-content: space-between; }
   .test-strip-label { font-size: 12px; color: #666; font-weight: 500; }
   .new-test-btn { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
   .new-test-btn:hover { opacity: 0.85; }
 
-  /* tasks reference panel */
-  .tasks-panel { width: 320px; background: #fff; border-radius: 16px; border: 0.5px solid #ddd; padding: 16px; }
+  /* ── Painel lateral (desktop) ── */
+  .tasks-panel { width: 280px; background: #fff; border-radius: 16px; border: 0.5px solid #ddd; padding: 16px; position: sticky; top: 32px; }
   .tasks-panel-title { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
   .task-chips { display: flex; flex-direction: column; gap: 7px; }
   .task-chip { display: flex; align-items: center; gap: 9px; }
@@ -29,7 +31,36 @@
   .progress-fill { height: 4px; background: #1D9E75; border-radius: 2px; transition: width 0.4s; }
   .progress-txt { font-size: 11px; color: #aaa; margin-top: 6px; }
 
-  /* phone frame */
+  /* ── Botão flutuante mobile (oculto no desktop) ── */
+  .fab-tarefas { display: none; }
+
+  /* ── Drawer de tarefas mobile ── */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; }
+  .drawer-overlay.open { display: block; }
+  .drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 16px 16px 32px; z-index: 201; transform: translateY(100%); transition: transform 0.3s ease; }
+  .drawer.open { transform: translateY(0); }
+  .drawer-handle { width: 36px; height: 4px; background: #d0d0d0; border-radius: 2px; margin: 0 auto 16px; }
+
+  /* ── Responsivo: mobile ── */
+  @media (max-width: 700px) {
+    html, body { padding: 0; align-items: stretch; }
+    .outer { flex-direction: column; align-items: center; gap: 0; padding: 0; }
+    .phone-col { gap: 0; width: 100%; }
+    .test-strip { width: 100%; padding: 10px 16px; background: #fff; border-bottom: 0.5px solid #e8e8e8; }
+    .tasks-panel { display: none; } /* painel lateral some no mobile */
+    .phone { width: 100%; height: 100dvh; border-radius: 0; border: none; }
+    .fab-tarefas {
+      display: flex; align-items: center; gap: 8px;
+      position: fixed; bottom: 20px; right: 16px; z-index: 100;
+      background: #1D9E75; color: #fff; border: none;
+      border-radius: 50px; padding: 12px 18px;
+      font-size: 13px; font-weight: 700;
+      box-shadow: 0 4px 16px rgba(29,158,117,0.4);
+      cursor: pointer;
+    }
+    .fab-tarefas .fab-badge { background: #fff; color: #1D9E75; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  }
+  /* ── Phone frame ── */
   .phone { width: 320px; height: 640px; border-radius: 36px; border: 8px solid #1a1a1a; background: #fff; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; position: relative; }
   .notch { height: 28px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; border-bottom: 0.5px solid #e8e8e8; }
   .notch-time { font-size: 11px; font-weight: 600; color: #1a1a1a; }
@@ -200,13 +231,16 @@
 <body>
 <div class="outer">
 
-  <!-- strip acima do celular -->
-  <div class="test-strip">
-    <span class="test-strip-label" id="testLabel">Teste #1</span>
-    <button class="new-test-btn" onclick="novoTeste()">Novo teste</button>
-  </div>
+  <!-- coluna do celular -->
+  <div class="phone-col">
 
-  <!-- celular -->
+    <!-- strip acima do celular -->
+    <div class="test-strip">
+      <span class="test-strip-label" id="testLabel">Teste #1</span>
+      <button class="new-test-btn" onclick="novoTeste()">Novo teste</button>
+    </div>
+
+    <!-- celular -->
   <div class="phone">
     <div class="notch">
       <span class="notch-time" id="clock">09:41</span>
@@ -874,7 +908,9 @@
 
   </div><!-- /phone -->
 
-  <!-- painel de tarefas (referência, não guia) -->
+  </div><!-- /phone-col -->
+
+  <!-- ── Painel lateral — visível só no desktop ── -->
   <div class="tasks-panel">
     <div class="tasks-panel-title">Tarefas do teste</div>
     <div class="task-chips" id="taskChips">
@@ -891,6 +927,31 @@
   </div>
 
 </div><!-- /outer -->
+
+<!-- ── FAB mobile — visível só no mobile ── -->
+<button class="fab-tarefas" id="fabTarefas" onclick="abrirDrawer()">
+  <span>Tarefas</span>
+  <span class="fab-badge" id="fabBadge">0</span>
+</button>
+
+<!-- ── Drawer mobile ── -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="fecharDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:14px;">Tarefas do teste</div>
+  <div class="task-chips">
+    <div class="task-chip"><div class="chip-num" id="dcn0">1</div><div class="chip-text" id="dct0">Cadastre um cliente novo</div></div>
+    <div class="task-chip"><div class="chip-num" id="dcn1">2</div><div class="chip-text" id="dct1">Agende um horário</div></div>
+    <div class="task-chip"><div class="chip-num" id="dcn2">3</div><div class="chip-text" id="dct2">Veja sua agenda do dia</div></div>
+    <div class="task-chip"><div class="chip-num" id="dcn3">4</div><div class="chip-text" id="dct3">Registre um pagamento</div></div>
+    <div class="task-chip"><div class="chip-num" id="dcn4">5</div><div class="chip-text" id="dct4">Confira quanto você ganhou</div></div>
+    <div class="task-chip"><div class="chip-num" id="dcn5">6</div><div class="chip-text" id="dct5">Veja um produto e tente pedir reposição</div></div>
+  </div>
+  <div class="progress-wrap" style="margin-top:14px;"><div class="progress-fill" id="dFill" style="width:0%"></div></div>
+  <div class="progress-txt" id="dTxt">0 de 6 concluídas</div>
+  <button id="dBtnAvaliar" onclick="fecharDrawer(); gerarRelatorio();" style="display:none;margin-top:14px;width:100%;background:#1D9E75;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">✓ Avaliar experiência</button>
+  <button onclick="fecharDrawer()" style="margin-top:10px;width:100%;background:#f5f5f5;color:#555;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;">Fechar</button>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -1004,21 +1065,34 @@ function marcarTarefa(idx, ts) {
   if (taskDone[idx]) return;
   taskDone[idx] = true;
   taskFim[idx] = ts || Date.now();
-
+  // painel desktop
   const num = document.getElementById('cn' + idx);
   const txt = document.getElementById('ct' + idx);
   if (num) { num.classList.add('done'); num.textContent = '✓'; }
   if (txt) txt.classList.add('done');
+  // drawer mobile
+  const dnum = document.getElementById('dcn' + idx);
+  const dtxt = document.getElementById('dct' + idx);
+  if (dnum) { dnum.classList.add('done'); dnum.textContent = '✓'; }
+  if (dtxt) dtxt.classList.add('done');
   atualizarProgresso();
 }
 
 function atualizarProgresso() {
   const done = taskDone.filter(Boolean).length;
+  // painel desktop
   document.getElementById('pFill').style.width = (done/6*100) + '%';
   document.getElementById('pTxt').textContent = done + ' de 6 concluídas';
+  // drawer mobile
+  document.getElementById('dFill').style.width = (done/6*100) + '%';
+  document.getElementById('dTxt').textContent = done + ' de 6 concluídas';
+  // badge FAB
+  document.getElementById('fabBadge').textContent = done;
   if (done === 6) {
     const btn = document.getElementById('btnAvaliar');
     if (btn) btn.style.display = 'block';
+    const dBtn = document.getElementById('dBtnAvaliar');
+    if (dBtn) dBtn.style.display = 'block';
   }
 }
 
@@ -1268,17 +1342,29 @@ function novoTeste() {
   testeNum++;
   document.getElementById('testLabel').textContent = 'Teste #' + testeNum;
   for (let i = 0; i < 6; i++) {
+    // painel desktop
     const num = document.getElementById('cn' + i);
     const txt = document.getElementById('ct' + i);
     if (num) { num.classList.remove('done'); num.textContent = i+1; }
     if (txt) txt.classList.remove('done');
+    // drawer mobile
+    const dnum = document.getElementById('dcn' + i);
+    const dtxt = document.getElementById('dct' + i);
+    if (dnum) { dnum.classList.remove('done'); dnum.textContent = i+1; }
+    if (dtxt) dtxt.classList.remove('done');
   }
   document.getElementById('pFill').style.width = '0%';
   document.getElementById('pTxt').textContent = '0 de 6 concluídas';
+  document.getElementById('dFill').style.width = '0%';
+  document.getElementById('dTxt').textContent = '0 de 6 concluídas';
+  document.getElementById('fabBadge').textContent = '0';
   const btnAv = document.getElementById('btnAvaliar');
   if (btnAv) btnAv.style.display = 'none';
+  const dBtnAv = document.getElementById('dBtnAvaliar');
+  if (dBtnAv) dBtnAv.style.display = 'none';
   const nn = document.getElementById('novoNome');
   if (nn) nn.value = '';
+  fecharDrawer();
   iniciarTeste();
   ir('login');
 }
@@ -1330,6 +1416,21 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 10000);
+
+// ───────────────────────────────────────────────
+// DRAWER MOBILE
+// ───────────────────────────────────────────────
+function abrirDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
 // ───────────────────────────────────────────────
 // FORMATAÇÃO DE CAMPOS
