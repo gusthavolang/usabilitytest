@@ -376,7 +376,7 @@
     <div class="screen" id="screen-agenda-novo">
       <div class="s-header">
         <div class="s-header-row">
-          <div class="back-btn" onclick="ir(\'agenda\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="back-btn" onclick="ir('agenda')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
           <div class="title" style="font-size:15px;">Novo agendamento</div>
           <div style="width:52px;"></div>
         </div>
@@ -483,7 +483,7 @@
     <div class="screen" id="screen-cliente-novo">
       <div class="s-header">
         <div class="s-header-row">
-          <div class="back-btn" onclick="ir(\'clientes\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="back-btn" onclick="ir('clientes')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
           <div class="title" style="font-size:15px;">Novo cliente</div>
           <div style="width:52px;"></div>
         </div>
@@ -523,10 +523,40 @@
     <div class="screen" id="screen-cliente-detalhe">
       <div class="s-header">
         <div class="s-header-row">
-          <div class="back-btn" onclick="ir(\'clientes\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Clientes</span></div>
+          <div class="back-btn" onclick="ir('clientes')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Clientes</span></div>
+          <div id="btnEditarCliente" style="font-size:13px;color:#1D9E75;font-weight:600;cursor:pointer;padding:8px;" onclick="editarClienteAtual()" role="button" tabindex="0">Editar</div>
         </div>
       </div>
       <div class="scroll" id="detalheCliente"></div>
+    </div>
+
+    <!-- ═══════════ EDITAR CLIENTE ═══════════ -->
+    <div class="screen" id="screen-cliente-editar">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('cliente-detalhe')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Editar cliente</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">Nome completo</label>
+          <input class="input-field" type="text" id="editNome" placeholder="Ex: Maria Silva">
+          <span class="field-error" id="errEditNome">Por favor, informe o nome</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Telefone (WhatsApp)</label>
+          <input class="input-field fmt-tel" type="tel" id="editTel" placeholder="(11) 99999-0000" maxlength="15">
+          <span class="field-error" id="errEditTel">Por favor, informe o telefone</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Aniversário (opcional)</label>
+          <input class="input-field fmt-data-curta" type="text" id="editAniversario" placeholder="DD/MM" maxlength="5">
+        </div>
+        <button class="btn-primary" onclick="salvarEdicaoCliente()">Salvar alterações</button>
+        <div class="link-text" style="margin-top:-4px;">Só nome e telefone são obrigatórios</div>
+      </div>
     </div>
 
     <!-- ═══════════ FINANCEIRO ═══════════ -->
@@ -588,7 +618,7 @@
     <div class="screen" id="screen-financeiro-pagamento">
       <div class="s-header">
         <div class="s-header-row">
-          <div class="back-btn" onclick="ir(\'financeiro\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="back-btn" onclick="ir('financeiro')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
           <div class="title" style="font-size:15px;">Registrar pagamento</div>
           <div style="width:52px;"></div>
         </div>
@@ -666,7 +696,7 @@
     <div class="screen" id="screen-reposicao">
       <div class="s-header">
         <div class="s-header-row">
-          <div class="back-btn" onclick="ir(\'estoque\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="back-btn" onclick="ir('estoque')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
           <div class="title" style="font-size:15px;">Pedir produtos</div>
           <div style="width:52px;"></div>
         </div>
@@ -1059,9 +1089,13 @@ function filtrarClientes(termo) {
   `).join('');
 }
 
+let clienteAtualId = null;
+
 function verCliente(id) {
+  clienteAtualId = id;
   const c = clientes.find(x => x.id === id);
   if (!c) return;
+  const historico = agendamentos.filter(a => a.cliente === c.nome && a.status !== 'Cancelado');
   const el = document.getElementById('detalheCliente');
   if (el) el.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0 16px;">
@@ -1070,14 +1104,47 @@ function verCliente(id) {
       <div style="font-size:13px;color:#888;">${c.telefone}</div>
       ${c.aniversario ? `<div style="font-size:12px;color:#888;">🎂 ${c.aniversario}</div>` : ''}
     </div>
-    <div class="section-label">Histórico</div>
+    <div class="section-label">Histórico de atendimentos</div>
     <div class="card">
-      ${agendamentos.filter(a => a.cliente === c.nome).slice(0,5).map(a =>
+      ${historico.slice(0,5).map(a =>
         `<div class="list-item"><div style="flex:1"><div class="item-name">${a.servico}</div><div class="item-sub">${a.data} · ${a.horario}</div></div></div>`
       ).join('') || '<div style="font-size:12px;color:#aaa;padding:8px 0;">Sem atendimentos registrados</div>'}
     </div>
+    <button class="btn-primary" style="margin-top:4px;" onclick="ir('agenda-novo')">+ Agendar horário</button>
   `;
   ir('cliente-detalhe');
+}
+
+function editarClienteAtual() {
+  const c = clientes.find(x => x.id === clienteAtualId);
+  if (!c) return;
+  document.getElementById('editNome').value = c.nome || '';
+  document.getElementById('editTel').value = c.telefone || '';
+  document.getElementById('editAniversario').value = c.aniversario || '';
+  ir('cliente-editar');
+}
+
+async function salvarEdicaoCliente() {
+  const nome = document.getElementById('editNome').value.trim();
+  const tel  = document.getElementById('editTel').value.trim();
+  mostrarErro('editNome', 'errEditNome', !nome);
+  mostrarErro('editTel',  'errEditTel',  !tel);
+  if (!nome || !tel) return;
+
+  const aniversario = document.getElementById('editAniversario').value.trim();
+  mostrarToast('Salvando...');
+
+  await Promise.all([
+    sheetsUpdate('Clientes', clienteAtualId, 'nome', nome),
+    sheetsUpdate('Clientes', clienteAtualId, 'telefone', tel),
+    sheetsUpdate('Clientes', clienteAtualId, 'aniversario', aniversario),
+  ]);
+
+  const c = clientes.find(x => x.id === clienteAtualId);
+  if (c) { c.nome = nome; c.telefone = tel; c.aniversario = aniversario; }
+
+  mostrarToast('Cliente atualizado!');
+  verCliente(clienteAtualId);
 }
 
 async function salvarCliente() {
