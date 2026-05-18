@@ -244,6 +244,19 @@
 
   /* ── Safe area para dispositivos com notch ── */
   .login-wrapper { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+
+  /* ── Seta visual em todos os selects ── */
+  select.input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  /* ── Gráfico financeiro: overflow contido ── */
+  .bar-chart { overflow: hidden; }
+  .bar-col { min-width: 0; }
+  .bar-day { font-size: 10px; color: #999; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -352,13 +365,7 @@
           <div class="title">Agenda</div>
           <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="ir('agenda-novo')">+ Novo</button>
         </div>
-        <div class="day-pills" style="margin-top:10px;">
-          <div class="day-pill"><div class="dname">Seg</div><div class="dnum">5</div></div>
-          <div class="day-pill active"><div class="dname">Ter</div><div class="dnum">6</div></div>
-          <div class="day-pill"><div class="dname">Qua</div><div class="dnum">7</div></div>
-          <div class="day-pill"><div class="dname">Qui</div><div class="dnum">8</div></div>
-          <div class="day-pill"><div class="dname">Sex</div><div class="dnum">9</div></div>
-        </div>
+        <div class="day-pills" id="dayPills" style="margin-top:10px;"></div>
       </div>
       <div class="scroll">
         <div id="listaAgenda"></div>
@@ -574,25 +581,22 @@
             <div style="font-size:12px;color:#555;">Saiu: <span style="color:#A32D2D;font-weight:600;" id="finSaidas">R$ 0,00</span></div>
           </div>
         </div>
-        <div class="section-label">Esta semana</div>
-        <div class="bar-chart">
-          <div class="bar-col"><div class="bar" style="height:30px;"></div><div class="bar-day">Seg</div></div>
-          <div class="bar-col"><div class="bar" style="height:45px;"></div><div class="bar-day">Ter</div></div>
-          <div class="bar-col"><div class="bar today" style="height:55px;"></div><div class="bar-day">Qua</div></div>
-          <div class="bar-col"><div class="bar" style="height:38px;"></div><div class="bar-day">Qui</div></div>
-          <div class="bar-col"><div class="bar" style="height:50px;"></div><div class="bar-day">Sex</div></div>
-          <div class="bar-col"><div class="bar" style="height:20px;"></div><div class="bar-day">Sáb</div></div>
-          <div class="bar-col"><div class="bar" style="height:4px;background:#e0e0e0;"></div><div class="bar-day">Dom</div></div>
-        </div>
+        <div class="section-label">Últimos 7 dias</div>
+        <div class="bar-chart" id="barChart"></div>
         <div style="display:flex;gap:6px;margin-bottom:2px;">
-          <select style="flex:1;font-size:11px;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;color:#555;appearance:none;">
-            <option>Todos os serviços</option>
+          <select id="filtroServico" onchange="renderFinanceiro()" style="flex:1;font-size:11px;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;color:#555;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23999%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;">
+            <option value="">Todos os serviços</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
+            <option>Escova progressiva</option>
             <option>Coloração</option>
+            <option>Hidratação</option>
+            <option>Manicure</option>
+            <option>Pedicure</option>
+            <option>Outro</option>
           </select>
-          <select style="flex:1;font-size:11px;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;color:#555;appearance:none;">
-            <option>Todas as formas</option>
+          <select id="filtroForma" onchange="renderFinanceiro()" style="flex:1;font-size:11px;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;color:#555;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23999%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;">
+            <option value="">Todas as formas</option>
             <option>Pix</option>
             <option>Cartão</option>
             <option>Dinheiro</option>
@@ -669,8 +673,13 @@
     <!-- ═══════════ ESTOQUE ═══════════ -->
     <div class="screen" id="screen-estoque">
       <div class="s-header">
-        <div class="title">Estoque</div>
-        <div class="sub">Seus produtos profissionais</div>
+        <div class="s-header-row">
+          <div>
+            <div class="title">Estoque</div>
+            <div class="sub" id="totalProdutos">Seus produtos profissionais</div>
+          </div>
+          <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="ir('produto-novo')">+ Novo</button>
+        </div>
       </div>
       <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar produto..." style="background:#f7f7f7;border-color:#f0f0f0;" oninput="filtrarEstoque(this.value)"></div>
       <div class="scroll" style="padding-top:10px;">
@@ -706,37 +715,12 @@
           <div style="font-size:12px;color:#888;margin-bottom:2px;">Sugeridos para você</div>
           <div style="font-size:11px;color:#1D9E75;font-weight:500;">Baseado no seu estoque atual</div>
         </div>
-        <div class="card">
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info"><div class="pname">Tônico Capilar Boticário</div><div class="product-qty" style="margin-top:3px;">R$ 42,90 / un.</div></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-              <span style="font-size:9px;color:#888;">Qtde</span>
-              <input type="number" min="0" value="2" oninput="recalcTotal()" style="width:52px;text-align:center;font-size:14px;font-weight:700;border:1.5px solid #e0e0e0;border-radius:8px;padding:4px 6px;" class="qty-input" data-price="42.90">
-            </div>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info"><div class="pname">Óleo de Argan 100ml</div><div class="product-qty" style="margin-top:3px;">R$ 78,00 / un.</div></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-              <span style="font-size:9px;color:#888;">Qtde</span>
-              <input type="number" min="0" value="1" oninput="recalcTotal()" style="width:52px;text-align:center;font-size:14px;font-weight:700;border:1.5px solid #e0e0e0;border-radius:8px;padding:4px 6px;" class="qty-input" data-price="78.00">
-            </div>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info"><div class="pname">Máscara Hidratante</div><div class="product-qty" style="margin-top:3px;">R$ 55,50 / un.</div></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-              <span style="font-size:9px;color:#888;">Qtde</span>
-              <input type="number" min="0" value="0" oninput="recalcTotal()" style="width:52px;text-align:center;font-size:14px;font-weight:700;border:1.5px solid #e0e0e0;border-radius:8px;padding:4px 6px;" class="qty-input" data-price="55.50">
-            </div>
-          </div>
-        </div>
+        <div class="card" id="reposicaoLista"></div>
         <div class="card-gray" style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-size:11px;color:#888;">Frete: <span style="color:#1a1a1a;font-weight:500;">R$ 18,00</span></div>
             <div style="font-size:12px;color:#888;margin-top:4px;">Total do pedido</div>
-            <div style="font-size:22px;font-weight:700;color:#1a1a1a;" id="totalPedido">R$ 163,80</div>
+            <div style="font-size:22px;font-weight:700;color:#1a1a1a;" id="totalPedido">R$ 18,00</div>
           </div>
         </div>
         <button class="btn-primary" onclick="ir('reposicao-sucesso')">Confirmar pedido</button>
@@ -751,6 +735,30 @@
         <div class="success-sub">Seus produtos chegam em até 3 dias úteis. Você receberá um aviso quando sair para entrega.</div>
         <button class="btn-primary" style="margin-top:8px;" onclick="ir('estoque')">Ver meu estoque</button>
         <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ NOVO PRODUTO ═══════════ -->
+    <div class="screen" id="screen-produto-novo">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('estoque')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Novo produto</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">Nome do produto</label>
+          <input class="input-field" type="text" id="prodNome" placeholder="Ex: Shampoo Profissional">
+          <span class="field-error" id="errProdNome">Por favor, informe o nome</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Quantidade inicial</label>
+          <input class="input-field" type="number" id="prodQtd" placeholder="0" min="0" inputmode="numeric">
+          <span class="field-error" id="errProdQtd">Informe a quantidade</span>
+        </div>
+        <button class="btn-primary" onclick="salvarProduto()">Cadastrar produto</button>
       </div>
     </div>
 
@@ -808,22 +816,7 @@
       </div>
       <div class="scroll" style="gap:12px;">
         <div class="section-label">Alertas ativos</div>
-        <div class="card">
-          <div class="list-item" style="padding:8px 0;">
-            <div style="width:34px;height:34px;border-radius:10px;background:#FCEBEB;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="16" height="16" fill="none" stroke="#A32D2D" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg>
-            </div>
-            <div style="flex:1"><div class="item-name">Tônico Capilar — estoque crítico</div><div class="item-sub">2 unidades restantes</div></div>
-            <div class="tag-red">Agora</div>
-          </div>
-          <div class="list-item" style="padding:8px 0;border-bottom:none;">
-            <div style="width:34px;height:34px;border-radius:10px;background:#FAEEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="16" height="16" fill="none" stroke="#854F0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            </div>
-            <div style="flex:1"><div class="item-name">Fernanda Tavares sem retorno</div><div class="item-sub">Última visita há 32 dias</div></div>
-            <div class="tag-amber">Hoje</div>
-          </div>
-        </div>
+        <div class="card" id="alertasAtivos"></div>
         <div class="section-label">Configurar alertas</div>
         <div class="card">
           <div class="toggle-row">
@@ -917,6 +910,7 @@ let lancamentos = [];
 let estoque = [];
 let formaPagSelecionada = 'Pix';
 let servicoSelecionadoPag = '';
+let produtoReposicaoId = null;
 
 // ═══════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -932,9 +926,10 @@ function ir(id) {
   if (t) t.classList.add('active');
   // Carrega dados ao entrar nas telas principais
   if (id === 'clientes') renderClientes();
-  if (id === 'agenda') renderAgenda();
+  if (id === 'agenda') { renderDayPills(); renderAgenda(); }
   if (id === 'financeiro') renderFinanceiro();
   if (id === 'estoque') renderEstoque();
+  if (id === 'notificacoes') renderNotificacoes();
   if (id === 'home') renderHome();
   if (id === 'reposicao') recalcTotal();
   // Limpa formulário de agendamento ao abrir
@@ -977,15 +972,7 @@ async function carregarTodosDados() {
   renderHome();
 }
 
-function produtosIniciais() {
-  return [
-    { nome: 'Tônico Capilar Boticário', quantidade: 2 },
-    { nome: 'Óleo de Argan 100ml', quantidade: 1 },
-    { nome: 'Máscara Hidratante', quantidade: 4 },
-    { nome: 'Shampoo Profissional', quantidade: 12 },
-    { nome: 'Condicionador Reparador', quantidade: 8 },
-  ];
-}
+function produtosIniciais() { return []; }
 
 // ═══════════════════════════════════════════════
 // HOME
@@ -1093,7 +1080,7 @@ let clienteAtualId = null;
 
 function verCliente(id) {
   clienteAtualId = id;
-  const c = clientes.find(x => x.id === id);
+  const c = clientes.find(x => String(x.id) === String(id));
   if (!c) return;
   const historico = agendamentos.filter(a => a.cliente === c.nome && a.status !== 'Cancelado');
   const el = document.getElementById('detalheCliente');
@@ -1116,7 +1103,7 @@ function verCliente(id) {
 }
 
 function editarClienteAtual() {
-  const c = clientes.find(x => x.id === clienteAtualId);
+  const c = clientes.find(x => String(x.id) === String(clienteAtualId));
   if (!c) return;
   document.getElementById('editNome').value = c.nome || '';
   document.getElementById('editTel').value = c.telefone || '';
@@ -1140,7 +1127,7 @@ async function salvarEdicaoCliente() {
     sheetsUpdate('Clientes', clienteAtualId, 'aniversario', aniversario),
   ]);
 
-  const c = clientes.find(x => x.id === clienteAtualId);
+  const c = clientes.find(x => String(x.id) === String(clienteAtualId));
   if (c) { c.nome = nome; c.telefone = tel; c.aniversario = aniversario; }
 
   mostrarToast('Cliente atualizado!');
@@ -1176,19 +1163,56 @@ async function salvarCliente() {
 // ═══════════════════════════════════════════════
 // AGENDA
 // ═══════════════════════════════════════════════
+let diaAgendaAtual = null;
+
+function renderDayPills() {
+  const container = document.getElementById('dayPills');
+  if (!container) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (!diaAgendaAtual) diaAgendaAtual = new Date(hoje);
+  const diaSemana = hoje.getDay();
+  const seg = new Date(hoje);
+  seg.setDate(hoje.getDate() - (diaSemana === 0 ? 6 : diaSemana - 1));
+  const nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(seg); d.setDate(seg.getDate() + i);
+    const dStr = d.toLocaleDateString('pt-BR');
+    const selStr = diaAgendaAtual.toLocaleDateString('pt-BR');
+    const hojeStr = hoje.toLocaleDateString('pt-BR');
+    const isActive = dStr === selStr;
+    const isHoje = dStr === hojeStr;
+    html += `<div class="day-pill ${isActive ? 'active' : ''}" onclick="selecionarDia('${dStr}')" style="cursor:pointer;">
+      <div class="dname">${nomes[d.getDay()]}</div>
+      <div class="dnum" style="${isHoje && !isActive ? 'color:#1D9E75;font-weight:700;' : ''}">${d.getDate()}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function selecionarDia(dataStr) {
+  const p = dataStr.split('/');
+  diaAgendaAtual = new Date(p[2] + '-' + p[1] + '-' + p[0] + 'T00:00:00');
+  renderDayPills();
+  renderAgenda();
+}
+
 function renderAgenda() {
   const el = document.getElementById('listaAgenda');
   if (!el) return;
+  if (!diaAgendaAtual) { const h = new Date(); h.setHours(0,0,0,0); diaAgendaAtual = h; }
+  const filtroData = diaAgendaAtual.toLocaleDateString('pt-BR');
   const hoje = new Date().toLocaleDateString('pt-BR');
+  const isDiaLabel = filtroData === hoje ? 'hoje' : 'nesse dia';
   const agendaHoje = agendamentos
-    .filter(a => a.data === hoje)
+    .filter(a => a.data === filtroData && a.status !== 'Cancelado')
     .sort((a,b) => a.horario.localeCompare(b.horario));
 
   if (!agendaHoje.length) {
     el.innerHTML = `
       <div style="text-align:center;padding:24px 0;">
         <div style="font-size:32px;margin-bottom:8px;">📅</div>
-        <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">Agenda livre hoje</div>
+        <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">Agenda livre ${isDiaLabel}</div>
         <div style="font-size:12px;color:#888;">Adicione um agendamento para começar</div>
       </div>
       <button class="btn-primary" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
@@ -1245,7 +1269,7 @@ async function salvarAgendamento() {
 }
 
 function verAgendamento(id) {
-  const ag = agendamentos.find(x => x.id === id);
+  const ag = agendamentos.find(x => String(x.id) === String(id));
   if (!ag) return;
   const cancelado = ag.status === 'Cancelado';
   const el = document.getElementById('detalheAgendamento');
@@ -1286,7 +1310,7 @@ function verAgendamento(id) {
 async function cancelarAgendamento(id) {
   mostrarToast('Cancelando...');
   await sheetsUpdate('Agendamentos', id, 'status', 'Cancelado');
-  const ag = agendamentos.find(x => x.id === id);
+  const ag = agendamentos.find(x => String(x.id) === String(id));
   if (ag) ag.status = 'Cancelado';
   mostrarToast('Agendamento cancelado');
   setTimeout(() => ir('agenda'), 1200);
@@ -1302,9 +1326,18 @@ function renderFinanceiro() {
   const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const elFinData = document.getElementById('finDataHoje');
   if (elFinData) elFinData.textContent = diasSemana[agora.getDay()] + ', ' + agora.getDate() + ' de ' + meses[agora.getMonth()];
-  const lancHoje = lancamentos.filter(l => l.data === hoje);
+
+  const filtroServico = document.getElementById('filtroServico')?.value || '';
+  const filtroForma   = document.getElementById('filtroForma')?.value   || '';
+
+  const lancHoje = lancamentos.filter(l => {
+    if (l.data !== hoje) return false;
+    if (filtroServico && l.descricao !== filtroServico) return false;
+    if (filtroForma   && l.forma     !== filtroForma)   return false;
+    return true;
+  });
   const totalEntradas = lancHoje.filter(l => l.tipo === 'entrada').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
-  const totalSaidas = lancHoje.filter(l => l.tipo === 'saida').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+  const totalSaidas   = lancHoje.filter(l => l.tipo === 'saida').reduce((s,l)   => s + (parseFloat(l.valor)||0), 0);
   const saldo = totalEntradas - totalSaidas;
 
   const elSaldo = document.getElementById('finSaldo');
@@ -1314,15 +1347,37 @@ function renderFinanceiro() {
   const elSai = document.getElementById('finSaidas');
   if (elSai) elSai.textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.',',');
 
+  // Gráfico — últimos 7 dias
+  const barEl = document.getElementById('barChart');
+  if (barEl) {
+    const nomes7 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const dias7 = Array.from({length:7}, (_,i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0,0,0,0); return d;
+    });
+    const totais = dias7.map(d => {
+      const dStr = d.toLocaleDateString('pt-BR');
+      return lancamentos.filter(l => l.data === dStr && l.tipo === 'entrada').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+    });
+    const maxVal = Math.max(...totais, 1);
+    barEl.innerHTML = dias7.map((d,i) => {
+      const isHoje = d.toLocaleDateString('pt-BR') === hoje;
+      const h = Math.max(4, Math.round((totais[i] / maxVal) * 52));
+      return `<div class="bar-col">
+        <div class="bar${isHoje?' today':''}" style="height:${h}px;"></div>
+        <div class="bar-day">${nomes7[d.getDay()]}</div>
+      </div>`;
+    }).join('');
+  }
+
   const elLanc = document.getElementById('listaLancamentos');
   if (!elLanc) return;
   if (!lancHoje.length) {
-    elLanc.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:12px 0;">Nenhum lançamento hoje</div>';
+    elLanc.innerHTML = `<div style="font-size:12px;color:#aaa;text-align:center;padding:12px 0;">Nenhum lançamento${filtroServico||filtroForma?' com esse filtro':' hoje'}</div>`;
     return;
   }
   elLanc.innerHTML = lancHoje.slice().reverse().map(l => `
     <div class="lançamento-row">
-      <div style="width:8px;height:8px;border-radius:50%;background:${l.tipo==='entrada'?'#1D9E75':'#A32D2D'};flex-shrink:0;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${l.tipo==='entrada'?'#1D9E75':'#A32D2D'};flex-shrink:0;margin-top:4px;"></div>
       <div class="lanc-info">
         <div class="lname">${l.descricao}</div>
         <div class="lsub">${l.forma || ''}</div>
@@ -1366,6 +1421,19 @@ function renderEstoque() {
   const alertEl = document.getElementById('alertaEstoque');
   if (!el) return;
 
+  const totalEl = document.getElementById('totalProdutos');
+  if (totalEl) totalEl.textContent = estoque.length + (estoque.length === 1 ? ' produto' : ' produtos');
+
+  if (!estoque.length) {
+    if (alertEl) alertEl.style.display = 'none';
+    el.innerHTML = `<div style="text-align:center;padding:24px 0;">
+      <div style="font-size:32px;margin-bottom:8px;">📦</div>
+      <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">Nenhum produto cadastrado</div>
+      <div style="font-size:12px;color:#888;">Toque em "+ Novo" para adicionar seu primeiro produto</div>
+    </div>`;
+    return;
+  }
+
   const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
   if (alertEl) {
     alertEl.style.display = criticos.length ? 'flex' : 'none';
@@ -1383,11 +1451,62 @@ function renderEstoque() {
         <div class="product-img"></div>
         <div class="product-info">
           <div class="pname">${p.nome}</div>
-          <div class="product-qty">${qty} unidades ${tag}</div>
+          <div class="product-qty">${qty} unidade${qty !== 1 ? 's' : ''} ${tag}</div>
         </div>
-        ${qty <= 5 ? `<button class="repor-btn" onclick="ir('reposicao')">Repor</button>` : ''}
+        ${qty <= 5 ? `<button class="repor-btn" onclick="abrirReposicao('${String(p.id)}')">Repor</button>` : ''}
       </div>`;
   }).join('');
+}
+
+async function salvarProduto() {
+  const nome = document.getElementById('prodNome').value.trim();
+  const qtd  = document.getElementById('prodQtd').value;
+  mostrarErro('prodNome', 'errProdNome', !nome);
+  mostrarErro('prodQtd',  'errProdQtd',  qtd === '' || qtd === null);
+  if (!nome || qtd === '' || qtd === null) return;
+
+  const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0 };
+  mostrarToast('Salvando...');
+  await sheetsPost('Estoque', registro);
+  estoque.push(registro);
+  document.getElementById('prodNome').value = '';
+  document.getElementById('prodQtd').value  = '';
+  mostrarToast('Produto cadastrado!');
+  ir('estoque');
+}
+
+function abrirReposicao(id) {
+  produtoReposicaoId = id;
+  ir('reposicao');
+  renderReposicao();
+}
+
+function renderReposicao() {
+  const lista = document.getElementById('reposicaoLista');
+  if (!lista) return;
+  if (!estoque.length) {
+    lista.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:16px 0;">Nenhum produto cadastrado</div>';
+    recalcTotal();
+    return;
+  }
+  lista.innerHTML = estoque.map(p => {
+    const qty = parseInt(p.quantidade) || 0;
+    const isCritico = qty <= 2;
+    return `<div class="product-row">
+      <div class="product-img"></div>
+      <div class="product-info">
+        <div class="pname">${p.nome}</div>
+        <div class="product-qty" style="margin-top:3px;${isCritico ? 'color:#A32D2D;font-weight:600;' : ''}">Estoque: ${qty} un.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span style="font-size:9px;color:#888;">Qtde</span>
+        <input type="number" min="0" value="${isCritico ? 1 : 0}" oninput="recalcTotal()"
+          style="width:52px;text-align:center;font-size:14px;font-weight:700;border:1.5px solid #e0e0e0;border-radius:8px;padding:4px 6px;"
+          class="qty-input" data-price="0">
+      </div>
+    </div>`;
+  }).join('');
+  recalcTotal();
 }
 
 // ═══════════════════════════════════════════════
@@ -1479,6 +1598,25 @@ function recalcTotal() {
     total += (parseInt(input.value)||0) * (parseFloat(input.dataset.price)||0);
   });
   document.getElementById('totalPedido').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+}
+
+function renderNotificacoes() {
+  const el = document.getElementById('alertasAtivos');
+  if (!el) return;
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+  if (!criticos.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:16px 0;">Nenhum alerta ativo no momento</div>';
+    return;
+  }
+  el.innerHTML = criticos.map(p => `
+    <div class="list-item" style="padding:8px 0;">
+      <div style="width:34px;height:34px;border-radius:10px;background:#FCEBEB;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" fill="none" stroke="#A32D2D" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg>
+      </div>
+      <div style="flex:1"><div class="item-name">${p.nome}</div><div class="item-sub">${p.quantidade} unidade(s) restante(s)</div></div>
+      <div class="tag-red">Crítico</div>
+    </div>
+  `).join('');
 }
 
 function selAntec(el) {
