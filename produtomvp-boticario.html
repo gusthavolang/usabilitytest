@@ -46,8 +46,11 @@
   .notch-icons { display: flex; gap: 4px; align-items: center; }
   .notch-icons span { font-size: 9px; color: #555; }
 
-  .screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; display: none; min-height: 0; }
-  .screen.active { display: flex; }
+  /* Cada screen ocupa todo o espaço disponível abaixo do notch */
+  .screen { display: none; flex-direction: column; width: 100%; min-height: 0; overflow: hidden; }
+  .screen.active { display: flex; flex: 1; }
+  /* Login não tem tab-bar, ocupa tudo */
+  #screen-login { flex: 1; overflow: hidden; }
 
   .s-header { padding: 10px 14px 8px; background: #fff; border-bottom: 0.5px solid #e8e8e8; flex-shrink: 0; }
   .s-header .title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
@@ -57,9 +60,10 @@
   .scroll { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
   .scroll::-webkit-scrollbar { display: none; }
 
-  .tab-bar { height: 54px; background: #fff; border-top: 0.5px solid #e8e8e8; display: flex; align-items: center; justify-content: space-around; flex-shrink: 0; padding-bottom: 4px; }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 10px; border-radius: 10px; transition: background 0.15s; }
+  .tab-bar { height: 60px; background: #fff; border-top: 0.5px solid #e8e8e8; display: flex; align-items: center; justify-content: space-around; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom, 4px); }
+  .tab { min-height: 44px; min-width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 4px 10px; border-radius: 10px; transition: background 0.15s; touch-action: manipulation; }
   .tab:hover { background: #f5f5f5; }
+  .tab:active { background: #f0f0f0; }
   .tab svg { width: 20px; height: 20px; stroke: #bbb; fill: none; stroke-width: 2; }
   .tab span { font-size: 9px; color: #bbb; font-weight: 500; }
   .tab.active svg { stroke: #1D9E75; }
@@ -193,14 +197,9 @@
 
 
   /* ── Transições de tela ── */
-  .screen { animation: fadeIn 200ms ease; }
+  .screen.active { animation: fadeIn 200ms ease; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
-
-  /* ── Tab bar: área de toque mínima 44px ── */
-  .tab { min-height: 44px; min-width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 4px 10px; border-radius: 10px; transition: background 0.15s; touch-action: manipulation; }
-  .tab-bar { height: 60px; background: #fff; border-top: 0.5px solid #e8e8e8; display: flex; align-items: center; justify-content: space-around; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom, 0); }
-  .tab:active { background: #f0f0f0; }
+  @media (prefers-reduced-motion: reduce) { .screen.active { animation: none; } }
 
   /* ── List-item: feedback de toque ── */
   .list-item:active { background: #f5fdfb; border-radius: 8px; }
@@ -298,26 +297,17 @@
       </div>
       <div class="scroll">
         <div class="metric-row">
-          <div class="metric"><div class="mlabel">Hoje no caixa</div><div class="mval green">R$ 480</div></div>
-          <div class="metric"><div class="mlabel">Atendimentos</div><div class="mval">4 de 7</div></div>
+          <div class="metric"><div class="mlabel">Hoje no caixa</div><div class="mval green" id="homeFaturamento">R$ 0,00</div></div>
+          <div class="metric"><div class="mlabel">Atendimentos</div><div class="mval" id="homeAtendimentos">0 hoje</div></div>
         </div>
         <div class="section-label">Próximos hoje</div>
         <div class="card">
-          <div class="list-item" style="padding:8px 0;" onclick="ir('agenda')">
-            <div class="avatar">CM</div>
-            <div style="flex:1"><div class="item-name">Carla Mendes</div><div class="item-sub">14h00 · Corte + escova</div></div>
-            <div class="tag-green">14h00</div>
-          </div>
-          <div class="list-item" style="padding:8px 0;border-bottom:none;" onclick="ir('agenda')">
-            <div class="avatar" style="background:#FAEEDA;color:#633806;">RS</div>
-            <div style="flex:1"><div class="item-name">Renata Santos</div><div class="item-sub">16h00 · Coloração</div></div>
-            <div class="tag-amber">16h00</div>
-          </div>
+          <div id="homeProximos"></div>
         </div>
         <div onclick="ir('agenda')" style="cursor:pointer;background:#E1F5EE;border-radius:10px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:12px;font-weight:600;color:#085041;">Ver agenda do dia</span><span style="font-size:13px;color:#1D9E75;">→</span></div>
-        <div class="alert-bar">
+        <div class="alert-bar" id="homeAlertEstoque" style="display:none;">
           <div class="alert-dot"></div>
-          <span>Estoque baixo: Tônico capilar</span>
+          <span>Produto(s) com estoque crítico</span>
         </div>
         <div class="section-label">Acesso rápido</div>
         <div class="quick-actions">
@@ -364,31 +354,7 @@
         </div>
       </div>
       <div class="scroll">
-        <div class="agenda-slot">
-          <div class="agenda-time">09h00</div>
-          <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>+ Livre</span></div>
-        </div>
-        <div class="agenda-slot">
-          <div class="agenda-time">10h30</div>
-          <div class="agenda-block filled"><div class="aname">Julia Rocha</div><div class="asvc">Escova progressiva · 1h30</div></div>
-        </div>
-        <div class="agenda-slot">
-          <div class="agenda-time">12h00</div>
-          <div class="agenda-block empty"><span>Pausa almoço</span></div>
-        </div>
-        <div class="agenda-slot">
-          <div class="agenda-time">14h00</div>
-          <div class="agenda-block filled"><div class="aname">Carla Mendes</div><div class="asvc">Corte + escova · 1h30</div></div>
-        </div>
-        <div class="agenda-slot">
-          <div class="agenda-time">16h00</div>
-          <div class="agenda-block filled-amber"><div class="aname-amber">Renata Santos</div><div class="asvc-amber">Coloração · 2h · pendente</div></div>
-        </div>
-        <div class="agenda-slot">
-          <div class="agenda-time">18h00</div>
-          <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>+ Livre</span></div>
-        </div>
-        <button class="btn-primary" onclick="ir('agenda-novo')">+ Novo agendamento</button>
+        <div id="listaAgenda"></div>
       </div>
       <div class="tab-bar">
         <div class="tab" onclick="ir('home')" role="button" aria-label="Início" tabindex="0"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
@@ -411,11 +377,11 @@
       <div class="scroll">
         <div class="input-group">
           <label class="input-label">Cliente</label>
-          <input class="input-field" type="text" placeholder="Nome da cliente" style="background:#f7f7f7;">
+          <input class="input-field" id="agCliente" type="text" placeholder="Nome do cliente" style="background:#f7f7f7;" list="clientesList"><datalist id="clientesList"></datalist>
         </div>
         <div class="input-group">
           <label class="input-label">Serviço</label>
-          <select class="input-field" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="pagServico" style="background:#f7f7f7;appearance:none;">
             <option value="">Selecionar serviço</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
@@ -455,7 +421,7 @@
           <svg width="14" height="14" fill="none" stroke-width="2" stroke="#1D9E75" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           <span style="font-size:11px;color:#888;">Lembrete automático ativado — o cliente receberá aviso no WhatsApp</span>
         </div>
-        <button class="btn-primary" onclick="marcarTarefa(1); ir('agenda-sucesso')">Confirmar agendamento</button>
+        <button class="btn-primary" onclick="salvarAgendamento()">Confirmar agendamento</button>
       </div>
     </div>
 
@@ -478,31 +444,10 @@
           <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="ir('cliente-novo')">+ Novo</button>
         </div>
       </div>
-      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar cliente..." style="background:#f7f7f7;border-color:#f0f0f0;"></div>
+      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar cliente..." style="background:#f7f7f7;border-color:#f0f0f0;" oninput="filtrarClientes(this.value)"></div>
       <div class="scroll" style="padding-top:10px;">
-        <div class="section-label">35 clientes</div>
-        <div class="card">
-          <div class="list-item" onclick="ir('cliente-detalhe')">
-            <div class="avatar">AB</div>
-            <div style="flex:1"><div class="item-name">Ana Beatriz</div><div class="item-sub">Último: há 7 dias</div></div>
-          </div>
-          <div class="list-item" onclick="ir('cliente-detalhe')">
-            <div class="avatar">CM</div>
-            <div style="flex:1"><div class="item-name">Carla Mendes</div><div class="item-sub">Último: há 14 dias</div></div>
-          </div>
-          <div class="list-item" onclick="ir('cliente-detalhe')">
-            <div class="avatar" style="background:#FAEEDA;color:#633806;">FT</div>
-            <div style="flex:1"><div class="item-name">Fernanda Tavares</div><div class="item-sub">Último: há 32 dias</div></div>
-          </div>
-          <div class="list-item" onclick="ir('cliente-detalhe')">
-            <div class="avatar" style="background:#FAEEDA;color:#633806;">JR</div>
-            <div style="flex:1"><div class="item-name">Julia Rocha</div><div class="item-sub">Último: há 45 dias</div></div>
-          </div>
-          <div class="list-item" style="border-bottom:none;" onclick="ir('cliente-detalhe')">
-            <div class="avatar">MP</div>
-            <div style="flex:1"><div class="item-name">Marcia Pinto</div><div class="item-sub">Último: há 5 dias</div></div>
-          </div>
-        </div>
+        <div class="section-label" id="totalClientes">0 clientes</div>
+        <div class="card" id="listaClientes"></div>
         <button class="btn-primary" onclick="ir('cliente-novo')">+ Cadastrar novo cliente</button>
       </div>
       <div class="tab-bar">
@@ -561,20 +506,7 @@
           <div class="back-btn" onclick="ir(\'clientes\')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Clientes</span></div>
         </div>
       </div>
-      <div class="scroll">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0 16px;">
-          <div style="width:60px;height:60px;border-radius:50%;background:#9FE1CB;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#085041;">AB</div>
-          <div style="font-size:18px;font-weight:700;color:#1a1a1a;">Ana Beatriz</div>
-          <div style="font-size:13px;color:#888;">(11) 98765-4321</div>
-        </div>
-        <div class="section-label">Histórico</div>
-        <div class="card">
-          <div class="list-item"><div style="flex:1"><div class="item-name">Escova progressiva</div><div class="item-sub">29 abr · R$ 180</div></div></div>
-          <div class="list-item"><div style="flex:1"><div class="item-name">Corte + hidratação</div><div class="item-sub">15 abr · R$ 110</div></div></div>
-          <div class="list-item" style="border-bottom:none;"><div style="flex:1"><div class="item-name">Coloração</div><div class="item-sub">01 abr · R$ 220</div></div></div>
-        </div>
-        <button class="btn-primary" onclick="ir('agenda-novo')">Agendar horário</button>
-      </div>
+      <div class="scroll" id="detalheCliente"></div>
     </div>
 
     <!-- ═══════════ FINANCEIRO ═══════════ -->
@@ -586,10 +518,10 @@
       <div class="scroll">
         <div class="card-gray" style="padding:16px;">
           <div style="font-size:12px;color:#888;margin-bottom:4px;">Caixa de hoje</div>
-          <div style="font-size:28px;font-weight:700;color:#1D9E75;">R$ 480,00</div>
+          <div style="font-size:28px;font-weight:700;color:#1D9E75;" id="finSaldo">R$ 0,00</div>
           <div style="display:flex;gap:16px;margin-top:6px;">
-            <div style="font-size:12px;color:#555;">Entrou: <span style="color:#1D9E75;font-weight:600;">R$ 600</span></div>
-            <div style="font-size:12px;color:#555;">Saiu: <span style="color:#A32D2D;font-weight:600;">R$ 120</span></div>
+            <div style="font-size:12px;color:#555;">Entrou: <span style="color:#1D9E75;font-weight:600;" id="finEntradas">R$ 0,00</span></div>
+            <div style="font-size:12px;color:#555;">Saiu: <span style="color:#A32D2D;font-weight:600;" id="finSaidas">R$ 0,00</span></div>
           </div>
         </div>
         <div class="section-label">Esta semana</div>
@@ -617,23 +549,7 @@
           </select>
         </div>
         <div class="section-label">Lançamentos de hoje</div>
-        <div class="card">
-          <div class="lançamento-row">
-            <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;"></div>
-            <div class="lanc-info"><div class="lname">Escova — Carla</div><div class="lsub">Pix</div></div>
-            <div class="lanc-val in">+R$ 80</div>
-          </div>
-          <div class="lançamento-row">
-            <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;"></div>
-            <div class="lanc-info"><div class="lname">Coloração — Julia</div><div class="lsub">Dinheiro</div></div>
-            <div class="lanc-val in">+R$ 220</div>
-          </div>
-          <div class="lançamento-row">
-            <div style="width:8px;height:8px;border-radius:50%;background:#A32D2D;flex-shrink:0;"></div>
-            <div class="lanc-info"><div class="lname">Produto Boticário</div><div class="lsub">Reposição</div></div>
-            <div class="lanc-val out">-R$ 120</div>
-          </div>
-        </div>
+        <div class="card" id="listaLancamentos"></div>
         <div style="display:flex;gap:8px;">
           <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Registrar pagamento</button>
           <button class="btn-outline" style="flex:1;">+ Registrar saída</button>
@@ -660,7 +576,7 @@
       <div class="scroll">
         <div class="input-group">
           <label class="input-label">Serviço</label>
-          <select class="input-field" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="pagServico" style="background:#f7f7f7;appearance:none;">
             <option value="">Selecionar serviço</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
@@ -708,50 +624,13 @@
       </div>
       <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar produto..." style="background:#f7f7f7;border-color:#f0f0f0;"></div>
       <div class="scroll" style="padding-top:10px;">
-        <div class="alert-bar-red">
+        <div class="alert-bar-red" id="alertaEstoque" style="display:none;">
           <div class="alert-dot" style="background:#E24B4A;"></div>
-          <span>2 produtos em falta — repor agora</span>
+          <span>Produtos em falta — repor agora</span>
         </div>
         <div class="section-label">Todos os produtos</div>
-        <div class="card">
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info">
-              <div class="pname">Tônico Capilar Boticário</div>
-              <div class="product-qty">2 unidades <span class="tag-red"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Crítico</span></div>
-            </div>
-            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info">
-              <div class="pname">Óleo de Argan 100ml</div>
-              <div class="product-qty">1 unidade <span class="tag-red"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Crítico</span></div>
-            </div>
-            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info">
-              <div class="pname">Máscara Hidratante</div>
-              <div class="product-qty">4 unidades <span class="tag-amber"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Baixo</span></div>
-            </div>
-            <button class="repor-btn" onclick="ir('reposicao')">Repor</button>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info">
-              <div class="pname">Shampoo Profissional</div>
-              <div class="product-qty">12 unidades <span class="tag-green"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>OK</span></div>
-            </div>
-          </div>
-          <div class="product-row">
-            <div class="product-img"></div>
-            <div class="product-info">
-              <div class="pname">Condicionador Reparador</div>
-              <div class="product-qty">8 unidades <span class="tag-green"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>OK</span></div>
-            </div>
-          </div>
+        <div class="card" id="listaEstoque">
+
         </div>
       </div>
       <div class="tab-bar">
@@ -941,9 +820,52 @@
 </div><!-- /outer -->
 
 <script>
-// ───────────────────────────────────────────────
-// NAVEGAÇÃO COM HISTÓRICO
-// ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// CONFIGURAÇÃO — GOOGLE SHEETS
+// ═══════════════════════════════════════════════
+const API = 'https://script.google.com/macros/s/AKfycbxHwAl0M3u4lvoyuvX6ym-0TCSVQU2jJ-MT0GcdO6lsEizGs5fJ8xrdJ3IhRw-HpTN-4g/exec';
+
+async function sheetsGet(aba) {
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'listar', aba })
+    });
+    // no-cors não retorna dados — usamos workaround via GET com parâmetro
+    const url = API + '?acao=listar&aba=' + encodeURIComponent(aba);
+    const r = await fetch(url);
+    const json = await r.json();
+    return json.dados || [];
+  } catch { return []; }
+}
+
+async function sheetsPost(aba, registro) {
+  try {
+    await fetch(API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'inserir', aba, registro })
+    });
+    return true;
+  } catch { return false; }
+}
+
+// ═══════════════════════════════════════════════
+// ESTADO LOCAL (cache em memória)
+// ═══════════════════════════════════════════════
+let clientes = [];
+let agendamentos = [];
+let lancamentos = [];
+let estoque = [];
+let formaPagSelecionada = 'Pix';
+let servicoSelecionadoPag = '';
+
+// ═══════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════
 let telaAnterior = 'home';
 let telaAtual = 'login';
 
@@ -953,88 +875,396 @@ function ir(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const t = document.getElementById('screen-' + id);
   if (t) t.classList.add('active');
+  // Carrega dados ao entrar nas telas principais
+  if (id === 'clientes') renderClientes();
+  if (id === 'agenda') renderAgenda();
+  if (id === 'financeiro') renderFinanceiro();
+  if (id === 'estoque') renderEstoque();
+  if (id === 'home') renderHome();
 }
 
-function voltar() {
-  ir(telaAnterior);
+function voltar() { ir(telaAnterior); }
+function fazerLogin() { carregarTodosDados(); ir('home'); }
+
+// ═══════════════════════════════════════════════
+// CARREGAMENTO INICIAL
+// ═══════════════════════════════════════════════
+async function carregarTodosDados() {
+  mostrarToast('Carregando seus dados...');
+  const [c, a, l, e] = await Promise.all([
+    sheetsGet('Clientes'),
+    sheetsGet('Agendamentos'),
+    sheetsGet('Financeiro'),
+    sheetsGet('Estoque')
+  ]);
+  clientes = c;
+  agendamentos = a;
+  lancamentos = l;
+  estoque = e.length ? e : produtosIniciais();
+  renderHome();
 }
 
-function fazerLogin() { ir('home'); }
+function produtosIniciais() {
+  return [
+    { nome: 'Tônico Capilar Boticário', quantidade: 2 },
+    { nome: 'Óleo de Argan 100ml', quantidade: 1 },
+    { nome: 'Máscara Hidratante', quantidade: 4 },
+    { nome: 'Shampoo Profissional', quantidade: 12 },
+    { nome: 'Condicionador Reparador', quantidade: 8 },
+  ];
+}
 
-// ───────────────────────────────────────────────
-// VALIDAÇÃO DE FORMULÁRIOS
-// ───────────────────────────────────────────────
-function mostrarErro(inputId, erroId, mostrar) {
-  const input = document.getElementById(inputId);
-  const erro = document.getElementById(erroId);
-  if (!input || !erro) return;
-  if (mostrar) {
-    input.classList.add('error');
-    erro.classList.add('visible');
-  } else {
-    input.classList.remove('error');
-    erro.classList.remove('visible');
+// ═══════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════
+function renderHome() {
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const agendaHoje = agendamentos.filter(a => a.data === hoje);
+  const lancHoje = lancamentos.filter(l => l.data === hoje);
+  const totalHoje = lancHoje.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+
+  // Faturamento
+  const elFat = document.getElementById('homeFaturamento');
+  if (elFat) elFat.textContent = 'R$ ' + totalHoje.toFixed(2).replace('.', ',');
+
+  // Atendimentos
+  const elAt = document.getElementById('homeAtendimentos');
+  if (elAt) elAt.textContent = agendaHoje.length + ' hoje';
+
+  // Alerta estoque
+  const elAlert = document.getElementById('homeAlertEstoque');
+  if (elAlert) elAlert.style.display = criticos.length ? 'flex' : 'none';
+
+  // Próximos agendamentos
+  renderProximosHome(agendaHoje);
+}
+
+function renderProximosHome(lista) {
+  const el = document.getElementById('homeProximos');
+  if (!el) return;
+  if (!lista.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:12px 0;">Nenhum agendamento para hoje</div>';
+    return;
   }
+  el.innerHTML = lista.slice(0,2).map(a => `
+    <div class="list-item" onclick="ir('agenda')" style="padding:8px 0;">
+      <div class="avatar" style="background:#9FE1CB;color:#085041;">${iniciais(a.cliente)}</div>
+      <div style="flex:1"><div class="item-name">${a.cliente}</div><div class="item-sub">${a.horario} · ${a.servico}</div></div>
+      <div class="tag-green">${a.horario}</div>
+    </div>
+  `).join('');
 }
 
-function salvarCliente() {
+// ═══════════════════════════════════════════════
+// CLIENTES
+// ═══════════════════════════════════════════════
+function renderClientes() {
+  const el = document.getElementById('listaClientes');
+  const countEl = document.getElementById('totalClientes');
+  if (!el) return;
+  if (countEl) countEl.textContent = clientes.length + ' clientes';
+  if (!clientes.length) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:24px 0;">
+        <div style="font-size:32px;margin-bottom:8px;">👤</div>
+        <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">Nenhum cliente ainda</div>
+        <div style="font-size:12px;color:#888;">Cadastre seu primeiro cliente para começar</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = clientes.map(c => `
+    <div class="list-item" onclick="verCliente('${c.id}')">
+      <div class="avatar" style="background:#9FE1CB;color:#085041;">${iniciais(c.nome)}</div>
+      <div style="flex:1">
+        <div class="item-name">${c.nome}</div>
+        <div class="item-sub">${c.telefone}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filtrarClientes(termo) {
+  const el = document.getElementById('listaClientes');
+  if (!el) return;
+  const filtrados = clientes.filter(c =>
+    c.nome.toLowerCase().includes(termo.toLowerCase()) ||
+    c.telefone.includes(termo)
+  );
+  if (!filtrados.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:12px;">Nenhum cliente encontrado</div>';
+    return;
+  }
+  el.innerHTML = filtrados.map(c => `
+    <div class="list-item" onclick="verCliente('${c.id}')">
+      <div class="avatar" style="background:#9FE1CB;color:#085041;">${iniciais(c.nome)}</div>
+      <div style="flex:1">
+        <div class="item-name">${c.nome}</div>
+        <div class="item-sub">${c.telefone}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function verCliente(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  const el = document.getElementById('detalheCliente');
+  if (el) el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0 16px;">
+      <div style="width:60px;height:60px;border-radius:50%;background:#9FE1CB;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#085041;">${iniciais(c.nome)}</div>
+      <div style="font-size:18px;font-weight:700;color:#1a1a1a;">${c.nome}</div>
+      <div style="font-size:13px;color:#888;">${c.telefone}</div>
+      ${c.aniversario ? `<div style="font-size:12px;color:#888;">🎂 ${c.aniversario}</div>` : ''}
+    </div>
+    <div class="section-label">Histórico</div>
+    <div class="card">
+      ${agendamentos.filter(a => a.cliente === c.nome).slice(0,5).map(a =>
+        `<div class="list-item"><div style="flex:1"><div class="item-name">${a.servico}</div><div class="item-sub">${a.data} · ${a.horario}</div></div></div>`
+      ).join('') || '<div style="font-size:12px;color:#aaa;padding:8px 0;">Sem atendimentos registrados</div>'}
+    </div>
+  `;
+  ir('cliente-detalhe');
+}
+
+async function salvarCliente() {
   const nome = document.getElementById('novoNome').value.trim();
   const tel = document.getElementById('novoTel').value.trim();
   let valido = true;
   mostrarErro('novoNome', 'errNome', !nome);
   mostrarErro('novoTel', 'errTel', !tel);
   if (!nome || !tel) return;
+
+  const registro = {
+    id: Date.now().toString(),
+    nome,
+    telefone: tel,
+    aniversario: document.getElementById('novoAniversario').value || '',
+    dataCadastro: new Date().toLocaleDateString('pt-BR')
+  };
+
+  mostrarToast('Salvando...');
+  await sheetsPost('Clientes', registro);
+  clientes.push(registro);
+
   document.getElementById('successClienteNome').textContent = nome + ' foi adicionado à lista de clientes.';
+  document.getElementById('novoNome').value = '';
+  document.getElementById('novoTel').value = '';
+  document.getElementById('novoAniversario').value = '';
   ir('cliente-sucesso');
 }
 
-function validarPagamento() {
-  const val = document.getElementById('pagValor').value.trim();
-  const invalido = !val || val === 'R$ 0,00';
-  mostrarErro('pagValor', 'errValor', invalido);
-  if (invalido) return;
+// ═══════════════════════════════════════════════
+// AGENDA
+// ═══════════════════════════════════════════════
+function renderAgenda() {
+  const el = document.getElementById('listaAgenda');
+  if (!el) return;
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const agendaHoje = agendamentos
+    .filter(a => a.data === hoje)
+    .sort((a,b) => a.horario.localeCompare(b.horario));
+
+  if (!agendaHoje.length) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:24px 0;">
+        <div style="font-size:32px;margin-bottom:8px;">📅</div>
+        <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">Agenda livre hoje</div>
+        <div style="font-size:12px;color:#888;">Adicione um agendamento para começar</div>
+      </div>
+      <button class="btn-primary" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
+    return;
+  }
+
+  const horarios = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  el.innerHTML = horarios.map(h => {
+    const ag = agendaHoje.find(a => a.horario === h);
+    if (ag) return `
+      <div class="agenda-slot">
+        <div class="agenda-time">${h}</div>
+        <div class="agenda-block filled">
+          <div class="aname">${ag.cliente}</div>
+          <div class="asvc">${ag.servico}</div>
+        </div>
+      </div>`;
+    return `
+      <div class="agenda-slot">
+        <div class="agenda-time">${h}</div>
+        <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>+ Livre</span></div>
+      </div>`;
+  }).join('') + `<button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
+}
+
+async function salvarAgendamento() {
+  const cliente = document.getElementById('agCliente').value.trim();
+  const servico = document.getElementById('agServico').value;
+  const data = document.getElementById('agendaData').value;
+  const horario = document.getElementById('agendaHora').value;
+
+  if (!cliente || !servico || !data || !horario) {
+    mostrarToast('Preencha todos os campos', 'erro'); return;
+  }
+
+  const dataFormatada = new Date(data).toLocaleDateString('pt-BR');
+  const registro = {
+    id: Date.now().toString(),
+    cliente, servico,
+    data: dataFormatada,
+    horario,
+    status: 'Confirmado',
+    dataCriacao: new Date().toLocaleDateString('pt-BR')
+  };
+
+  mostrarToast('Salvando...');
+  await sheetsPost('Agendamentos', registro);
+  agendamentos.push(registro);
+  ir('agenda-sucesso');
+}
+
+// ═══════════════════════════════════════════════
+// FINANCEIRO
+// ═══════════════════════════════════════════════
+function renderFinanceiro() {
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const lancHoje = lancamentos.filter(l => l.data === hoje);
+  const totalEntradas = lancHoje.filter(l => l.tipo === 'entrada').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+  const totalSaidas = lancHoje.filter(l => l.tipo === 'saida').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+  const saldo = totalEntradas - totalSaidas;
+
+  const elSaldo = document.getElementById('finSaldo');
+  if (elSaldo) elSaldo.textContent = 'R$ ' + saldo.toFixed(2).replace('.',',');
+  const elEnt = document.getElementById('finEntradas');
+  if (elEnt) elEnt.textContent = 'R$ ' + totalEntradas.toFixed(2).replace('.',',');
+  const elSai = document.getElementById('finSaidas');
+  if (elSai) elSai.textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.',',');
+
+  const elLanc = document.getElementById('listaLancamentos');
+  if (!elLanc) return;
+  if (!lancHoje.length) {
+    elLanc.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:12px 0;">Nenhum lançamento hoje</div>';
+    return;
+  }
+  elLanc.innerHTML = lancHoje.slice().reverse().map(l => `
+    <div class="lançamento-row">
+      <div style="width:8px;height:8px;border-radius:50%;background:${l.tipo==='entrada'?'#1D9E75':'#A32D2D'};flex-shrink:0;"></div>
+      <div class="lanc-info">
+        <div class="lname">${l.descricao}</div>
+        <div class="lsub">${l.forma || ''}</div>
+      </div>
+      <div class="lanc-val ${l.tipo==='entrada'?'in':'out'}">${l.tipo==='entrada'?'+':'-'}R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</div>
+    </div>
+  `).join('');
+}
+
+async function validarPagamento() {
+  const valStr = document.getElementById('pagValor').value.trim();
+  const servico = document.getElementById('pagServico').value;
+  if (!valStr || valStr === 'R$ 0,00') {
+    mostrarErro('pagValor', 'errValor', true); return;
+  }
+  mostrarErro('pagValor', 'errValor', false);
+
+  const valor = valStr.replace('R$','').replace(/\./g,'').replace(',','.').trim();
+  const registro = {
+    id: Date.now().toString(),
+    tipo: 'entrada',
+    descricao: servico || 'Serviço',
+    valor: parseFloat(valor).toFixed(2),
+    forma: formaPagSelecionada,
+    data: new Date().toLocaleDateString('pt-BR'),
+    hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  mostrarToast('Salvando...');
+  await sheetsPost('Financeiro', registro);
+  lancamentos.push(registro);
+  document.getElementById('pagValor').value = '';
   ir('pagamento-sucesso');
 }
 
-// Limpar erros ao digitar
-document.addEventListener('DOMContentLoaded', () => {
-  ['novoNome','novoTel','pagValor'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => el.classList.remove('error'));
-  });
-  // Suporte a teclado para elementos custom com role=button
-  document.querySelectorAll('[role="button"]').forEach(el => {
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
-    });
-  });
-});
+// ═══════════════════════════════════════════════
+// ESTOQUE
+// ═══════════════════════════════════════════════
+function renderEstoque() {
+  const el = document.getElementById('listaEstoque');
+  const alertEl = document.getElementById('alertaEstoque');
+  if (!el) return;
 
-// ───────────────────────────────────────────────
-// FUNÇÕES DE TELA
-// ───────────────────────────────────────────────
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+  if (alertEl) {
+    alertEl.style.display = criticos.length ? 'flex' : 'none';
+    alertEl.querySelector('span').textContent = criticos.length + (criticos.length === 1 ? ' produto em falta — repor agora' : ' produtos em falta — repor agora');
+  }
+
+  el.innerHTML = estoque.map(p => {
+    const qty = parseInt(p.quantidade);
+    let tag = '';
+    if (qty <= 2) tag = `<span class="tag-red"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Crítico</span>`;
+    else if (qty <= 5) tag = `<span class="tag-amber"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Baixo</span>`;
+    else tag = `<span class="tag-green"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>OK</span>`;
+    return `
+      <div class="product-row">
+        <div class="product-img"></div>
+        <div class="product-info">
+          <div class="pname">${p.nome}</div>
+          <div class="product-qty">${qty} unidades ${tag}</div>
+        </div>
+        ${qty <= 5 ? `<button class="repor-btn" onclick="ir('reposicao')">Repor</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// UTILITÁRIOS
+// ═══════════════════════════════════════════════
+function iniciais(nome) {
+  if (!nome) return '?';
+  return nome.trim().split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
+}
+
+function mostrarToast(msg, tipo) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.background = tipo === 'erro' ? '#A32D2D' : '#1a1a1a';
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+function mostrarErro(inputId, erroId, mostrar) {
+  const input = document.getElementById(inputId);
+  const erro = document.getElementById(erroId);
+  if (!input || !erro) return;
+  mostrar ? (input.classList.add('error'), erro.classList.add('visible'))
+           : (input.classList.remove('error'), erro.classList.remove('visible'));
+}
+
 function selPag(btn) {
+  formaPagSelecionada = btn.textContent.trim();
   btn.parentElement.querySelectorAll('button').forEach(b => {
-    b.style.borderColor = '#e0e0e0'; b.style.background = '#fff'; b.style.color = '#555';
+    b.style.borderColor='#e0e0e0'; b.style.background='#fff'; b.style.color='#555';
   });
-  btn.style.borderColor = '#1D9E75'; btn.style.background = '#E1F5EE'; btn.style.color = '#085041';
+  btn.style.borderColor='#1D9E75'; btn.style.background='#E1F5EE'; btn.style.color='#085041';
 }
 
 function recalcTotal() {
   let total = 18;
   document.querySelectorAll('#screen-reposicao .qty-input').forEach(input => {
-    const qty = parseInt(input.value) || 0;
-    const price = parseFloat(input.dataset.price) || 0;
-    total += qty * price;
+    total += (parseInt(input.value)||0) * (parseFloat(input.dataset.price)||0);
   });
   document.getElementById('totalPedido').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
 }
 
 function selAntec(el) {
   el.parentElement.querySelectorAll('div').forEach(d => {
-    d.style.borderColor = '#e0e0e0'; d.style.background = '#fff'; d.style.color = '#555'; d.style.fontWeight = '500';
+    d.style.borderColor='#e0e0e0'; d.style.background='#fff'; d.style.color='#555'; d.style.fontWeight='500';
   });
-  el.style.borderColor = '#1D9E75'; el.style.background = '#E1F5EE'; el.style.color = '#085041'; el.style.fontWeight = '600';
+  el.style.borderColor='#1D9E75'; el.style.background='#E1F5EE'; el.style.color='#085041'; el.style.fontWeight='600';
 }
 
 // ── Relógio ──
@@ -1046,47 +1276,19 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 10000);
 
-// ───────────────────────────────────────────────
-// FORMATAÇÃO DE CAMPOS
-// ───────────────────────────────────────────────
-function aplicarFormatacoes() {
-  document.querySelectorAll('.fmt-tel').forEach(el => {
-    el.addEventListener('input', function () {
-      let d = this.value.replace(/\D/g, '').slice(0, 11);
-      if (!d) { this.value = ''; return; }
-      if (d.length <= 2)       this.value = '(' + d;
-      else if (d.length <= 6)  this.value = '(' + d.slice(0,2) + ') ' + d.slice(2);
-      else if (d.length <= 10) this.value = '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
-      else                     this.value = '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+// ── Suporte a teclado ──
+document.addEventListener('DOMContentLoaded', () => {
+  ['novoNome','novoTel','pagValor'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => el.classList.remove('error'));
+  });
+  document.querySelectorAll('[role="button"]').forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key==='Enter'||e.key===' ') { e.preventDefault(); el.click(); }
     });
   });
-  document.querySelectorAll('.fmt-data').forEach(el => {
-    el.addEventListener('input', function () {
-      let d = this.value.replace(/\D/g, '').slice(0, 8);
-      if (d.length > 4) d = d.slice(0,2) + '/' + d.slice(2,4) + '/' + d.slice(4);
-      else if (d.length > 2) d = d.slice(0,2) + '/' + d.slice(2);
-      this.value = d;
-    });
-  });
-  document.querySelectorAll('.fmt-data-curta').forEach(el => {
-    el.addEventListener('input', function () {
-      let d = this.value.replace(/\D/g, '').slice(0, 4);
-      this.value = d.length > 2 ? d.slice(0,2) + '/' + d.slice(2) : d;
-    });
-  });
-  document.querySelectorAll('.fmt-moeda').forEach(el => {
-    el.addEventListener('input', function () {
-      let d = this.value.replace(/\D/g, '');
-      if (!d || d === '0') { this.value = ''; return; }
-      const num = parseInt(d, 10);
-      this.value = 'R$ ' + Math.floor(num/100).toLocaleString('pt-BR') + ',' + String(num%100).padStart(2,'0');
-    });
-    el.addEventListener('focus', function () { if (!this.value) this.value = 'R$ 0,00'; });
-    el.addEventListener('blur',  function () { if (this.value === 'R$ 0,00') this.value = ''; });
-  });
-}
-document.addEventListener('DOMContentLoaded', aplicarFormatacoes);
-if (document.readyState !== 'loading') aplicarFormatacoes();
+});
+
 </script>
 </body>
 </html>
