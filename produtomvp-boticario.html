@@ -168,6 +168,13 @@
   .link-text { font-size: 12px; color: #888; text-align: center; }
   .link-text span { color: #1D9E75; font-weight: 600; cursor: pointer; }
 
+  /* ── Dropdown de busca de clientes ── */
+  .cliente-dropdown { position:absolute; top:calc(100% + 2px); left:0; right:0; background:#fff; border:1.5px solid #1D9E75; border-radius:10px; z-index:200; max-height:150px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+  .cliente-dropdown-item { padding:10px 12px; font-size:13px; cursor:pointer; border-bottom:0.5px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; }
+  .cliente-dropdown-item:last-child { border-bottom:none; }
+  .cliente-dropdown-item:active { background:#f7f7f7; }
+  .cliente-dropdown-item .dd-tel { font-size:11px; color:#aaa; }
+
   .bar-chart { display: flex; gap: 6px; align-items: flex-end; height: 60px; }
   .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .bar { width: 100%; border-radius: 4px 4px 0 0; background: #9FE1CB; min-height: 4px; }
@@ -283,8 +290,8 @@
       <div class="s-header">
         <div class="s-header-row">
           <div>
-            <div class="title" id="homeGreeting">Bom dia, Ana</div>
-            <div class="sub">Terça, 06 de maio de 2025</div>
+            <div class="title" id="homeGreeting">Bom dia!</div>
+            <div class="sub" id="homeDataHoje"></div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div onclick="ir('notificacoes')" role="button" aria-label="Notificações" tabindex="0" style="position:relative;cursor:pointer;width:36px;height:36px;border-radius:50%;background:#f7f7f7;display:flex;align-items:center;justify-content:center;">
@@ -375,13 +382,14 @@
         </div>
       </div>
       <div class="scroll">
-        <div class="input-group">
+        <div class="input-group" style="position:relative;">
           <label class="input-label">Cliente</label>
-          <input class="input-field" id="agCliente" type="text" placeholder="Nome do cliente" style="background:#f7f7f7;" list="clientesList"><datalist id="clientesList"></datalist>
+          <input class="input-field" id="agCliente" type="text" placeholder="Buscar cliente cadastrado..." style="background:#f7f7f7;" oninput="filtrarClientesAg(this.value)" autocomplete="off">
+          <div class="cliente-dropdown" id="agClienteDropdown" style="display:none;"></div>
         </div>
         <div class="input-group">
           <label class="input-label">Serviço</label>
-          <select class="input-field" id="pagServico" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="agServico" style="background:#f7f7f7;appearance:none;">
             <option value="">Selecionar serviço</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
@@ -434,6 +442,18 @@
         <button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda')">Ver agenda do dia</button>
         <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
       </div>
+    </div>
+
+    <!-- ═══════════ DETALHE AGENDAMENTO ═══════════ -->
+    <div class="screen" id="screen-agenda-detalhe">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('agenda')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Agenda</span></div>
+          <div class="title" style="font-size:15px;">Agendamento</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll" id="detalheAgendamento"></div>
     </div>
 
     <!-- ═══════════ CLIENTES ═══════════ -->
@@ -492,8 +512,8 @@
     <div class="screen" id="screen-cliente-sucesso">
       <div class="success-screen">
         <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="success-title">Cliente cadastrada!</div>
-        <div class="success-sub" id="successClienteNome">A cliente foi adicionada à sua lista.</div>
+        <div class="success-title">Cliente cadastrado!</div>
+        <div class="success-sub" id="successClienteNome">O cliente foi adicionado à sua lista.</div>
         <button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda-novo')">Agendar horário</button>
         <button class="btn-outline" onclick="ir('clientes')">Ver lista de clientes</button>
       </div>
@@ -513,7 +533,7 @@
     <div class="screen" id="screen-financeiro">
       <div class="s-header">
         <div class="title">Financeiro</div>
-        <div class="sub">Terça, 06 de maio</div>
+        <div class="sub" id="finDataHoje"></div>
       </div>
       <div class="scroll">
         <div class="card-gray" style="padding:16px;">
@@ -552,7 +572,7 @@
         <div class="card" id="listaLancamentos"></div>
         <div style="display:flex;gap:8px;">
           <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Registrar pagamento</button>
-          <button class="btn-outline" style="flex:1;">+ Registrar saída</button>
+          <button class="btn-outline" style="flex:1;" onclick="mostrarToast('Em breve: registro de saídas')">+ Registrar saída</button>
         </div>
       </div>
       <div class="tab-bar">
@@ -622,7 +642,7 @@
         <div class="title">Estoque</div>
         <div class="sub">Seus produtos profissionais</div>
       </div>
-      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar produto..." style="background:#f7f7f7;border-color:#f0f0f0;"></div>
+      <div style="padding:10px 14px 0;"><input class="input-field" placeholder="Buscar produto..." style="background:#f7f7f7;border-color:#f0f0f0;" oninput="filtrarEstoque(this.value)"></div>
       <div class="scroll" style="padding-top:10px;">
         <div class="alert-bar-red" id="alertaEstoque" style="display:none;">
           <div class="alert-dot" style="background:#E24B4A;"></div>
@@ -689,7 +709,7 @@
             <div style="font-size:22px;font-weight:700;color:#1a1a1a;" id="totalPedido">R$ 163,80</div>
           </div>
         </div>
-        <button class="btn-primary" onclick="marcarTarefa(5); ir('reposicao-sucesso')">Confirmar pedido</button>
+        <button class="btn-primary" onclick="ir('reposicao-sucesso')">Confirmar pedido</button>
       </div>
     </div>
 
@@ -827,18 +847,23 @@ const API = 'https://script.google.com/macros/s/AKfycbxHwAl0M3u4lvoyuvX6ym-0TCSV
 
 async function sheetsGet(aba) {
   try {
-    const res = await fetch(API, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'listar', aba })
-    });
-    // no-cors não retorna dados — usamos workaround via GET com parâmetro
     const url = API + '?acao=listar&aba=' + encodeURIComponent(aba);
     const r = await fetch(url);
     const json = await r.json();
     return json.dados || [];
   } catch { return []; }
+}
+
+async function sheetsUpdate(aba, id, campo, valor) {
+  try {
+    await fetch(API, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'atualizar', aba, id, campo, valor })
+    });
+    return true;
+  } catch { return false; }
 }
 
 async function sheetsPost(aba, registro) {
@@ -881,10 +906,28 @@ function ir(id) {
   if (id === 'financeiro') renderFinanceiro();
   if (id === 'estoque') renderEstoque();
   if (id === 'home') renderHome();
+  if (id === 'reposicao') recalcTotal();
+  // Limpa formulário de agendamento ao abrir
+  if (id === 'agenda-novo') {
+    const campos = ['agCliente', 'agendaData'];
+    campos.forEach(c => { const el = document.getElementById(c); if (el) el.value = ''; });
+    const sel = document.getElementById('agServico');
+    if (sel) sel.selectedIndex = 0;
+    const selH = document.getElementById('agendaHora');
+    if (selH) selH.selectedIndex = 0;
+    const dd = document.getElementById('agClienteDropdown');
+    if (dd) dd.style.display = 'none';
+  }
 }
 
 function voltar() { ir(telaAnterior); }
-function fazerLogin() { carregarTodosDados(); ir('home'); }
+function fazerLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  if (!user || !pass) { mostrarToast('Preencha telefone/e-mail e senha', 'erro'); return; }
+  carregarTodosDados();
+  ir('home');
+}
 
 // ═══════════════════════════════════════════════
 // CARREGAMENTO INICIAL
@@ -918,7 +961,17 @@ function produtosIniciais() {
 // HOME
 // ═══════════════════════════════════════════════
 function renderHome() {
-  const hoje = new Date().toLocaleDateString('pt-BR');
+  const agora = new Date();
+  const hoje = agora.toLocaleDateString('pt-BR');
+  const hora = agora.getHours();
+  const saudacao = hora < 12 ? 'Bom dia!' : hora < 18 ? 'Boa tarde!' : 'Boa noite!';
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const dataExtenso = diasSemana[agora.getDay()] + ', ' + agora.getDate() + ' de ' + meses[agora.getMonth()];
+  const elGreeting = document.getElementById('homeGreeting');
+  if (elGreeting) elGreeting.textContent = saudacao;
+  const elData = document.getElementById('homeDataHoje');
+  if (elData) elData.textContent = dataExtenso;
   const agendaHoje = agendamentos.filter(a => a.data === hoje);
   const lancHoje = lancamentos.filter(l => l.data === hoje);
   const totalHoje = lancHoje.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
@@ -1030,7 +1083,6 @@ function verCliente(id) {
 async function salvarCliente() {
   const nome = document.getElementById('novoNome').value.trim();
   const tel = document.getElementById('novoTel').value.trim();
-  let valido = true;
   mostrarErro('novoNome', 'errNome', !nome);
   mostrarErro('novoTel', 'errTel', !tel);
   if (!nome || !tel) return;
@@ -1079,14 +1131,18 @@ function renderAgenda() {
   const horarios = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
   el.innerHTML = horarios.map(h => {
     const ag = agendaHoje.find(a => a.horario === h);
-    if (ag) return `
+    if (ag) {
+      const cancelado = ag.status === 'Cancelado';
+      if (cancelado) return '';
+      return `
       <div class="agenda-slot">
         <div class="agenda-time">${h}</div>
-        <div class="agenda-block filled">
+        <div class="agenda-block filled" onclick="verAgendamento('${ag.id}')" style="cursor:pointer;">
           <div class="aname">${ag.cliente}</div>
           <div class="asvc">${ag.servico}</div>
         </div>
       </div>`;
+    }
     return `
       <div class="agenda-slot">
         <div class="agenda-time">${h}</div>
@@ -1105,7 +1161,7 @@ async function salvarAgendamento() {
     mostrarToast('Preencha todos os campos', 'erro'); return;
   }
 
-  const dataFormatada = new Date(data).toLocaleDateString('pt-BR');
+  const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
   const registro = {
     id: Date.now().toString(),
     cliente, servico,
@@ -1121,11 +1177,64 @@ async function salvarAgendamento() {
   ir('agenda-sucesso');
 }
 
+function verAgendamento(id) {
+  const ag = agendamentos.find(x => x.id === id);
+  if (!ag) return;
+  const cancelado = ag.status === 'Cancelado';
+  const el = document.getElementById('detalheAgendamento');
+  if (el) el.innerHTML = `
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:2px;">Cliente</div>
+          <div style="font-size:15px;font-weight:600;color:#1a1a1a;">${ag.cliente}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:2px;">Serviço</div>
+          <div style="font-size:14px;color:#1a1a1a;">${ag.servico}</div>
+        </div>
+        <div style="display:flex;gap:24px;">
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:2px;">Data</div>
+            <div style="font-size:14px;color:#1a1a1a;">${ag.data}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#888;margin-bottom:2px;">Horário</div>
+            <div style="font-size:14px;color:#1a1a1a;">${ag.horario}</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:4px;">Status</div>
+          ${cancelado
+            ? '<span class="tag-red">Cancelado</span>'
+            : '<span class="tag-green">Confirmado</span>'}
+        </div>
+      </div>
+    </div>
+    ${!cancelado ? `<button style="background:#fff;color:#A32D2D;border:1.5px solid #A32D2D;border-radius:12px;padding:12px;font-size:14px;font-weight:600;width:100%;cursor:pointer;" onclick="cancelarAgendamento('${ag.id}')">Cancelar agendamento</button>` : ''}
+  `;
+  ir('agenda-detalhe');
+}
+
+async function cancelarAgendamento(id) {
+  mostrarToast('Cancelando...');
+  await sheetsUpdate('Agendamentos', id, 'status', 'Cancelado');
+  const ag = agendamentos.find(x => x.id === id);
+  if (ag) ag.status = 'Cancelado';
+  mostrarToast('Agendamento cancelado');
+  setTimeout(() => ir('agenda'), 1200);
+}
+
 // ═══════════════════════════════════════════════
 // FINANCEIRO
 // ═══════════════════════════════════════════════
 function renderFinanceiro() {
-  const hoje = new Date().toLocaleDateString('pt-BR');
+  const agora = new Date();
+  const hoje = agora.toLocaleDateString('pt-BR');
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const elFinData = document.getElementById('finDataHoje');
+  if (elFinData) elFinData.textContent = diasSemana[agora.getDay()] + ', ' + agora.getDate() + ' de ' + meses[agora.getMonth()];
   const lancHoje = lancamentos.filter(l => l.data === hoje);
   const totalEntradas = lancHoje.filter(l => l.tipo === 'entrada').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
   const totalSaidas = lancHoje.filter(l => l.tipo === 'saida').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
@@ -1215,6 +1324,51 @@ function renderEstoque() {
 }
 
 // ═══════════════════════════════════════════════
+// BUSCA DE ESTOQUE
+// ═══════════════════════════════════════════════
+function filtrarEstoque(termo) {
+  const el = document.getElementById('listaEstoque');
+  if (!el) return;
+  if (!termo.trim()) { renderEstoque(); return; }
+  const filtrados = estoque.filter(p => p.nome.toLowerCase().includes(termo.toLowerCase()));
+  if (!filtrados.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:16px 0;">Nenhum produto encontrado</div>';
+    return;
+  }
+  const estoqueOriginal = estoque;
+  estoque = filtrados;
+  renderEstoque();
+  estoque = estoqueOriginal;
+}
+
+// ═══════════════════════════════════════════════
+// BUSCA DE CLIENTES NO AGENDAMENTO
+// ═══════════════════════════════════════════════
+function filtrarClientesAg(termo) {
+  const dd = document.getElementById('agClienteDropdown');
+  if (!dd) return;
+  if (!termo.trim()) { dd.style.display = 'none'; return; }
+  const filtrados = clientes.filter(c =>
+    c.nome.toLowerCase().includes(termo.toLowerCase())
+  );
+  if (!filtrados.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = filtrados.slice(0, 5).map(c => `
+    <div class="cliente-dropdown-item" onclick="selecionarClienteAg('${c.nome.replace(/'/g, "\\'")}')">
+      <span>${c.nome}</span>
+      <span class="dd-tel">${c.telefone}</span>
+    </div>
+  `).join('');
+  dd.style.display = 'block';
+}
+
+function selecionarClienteAg(nome) {
+  const input = document.getElementById('agCliente');
+  const dd = document.getElementById('agClienteDropdown');
+  if (input) input.value = nome;
+  if (dd) dd.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
 // UTILITÁRIOS
 // ═══════════════════════════════════════════════
 function iniciais(nome) {
@@ -1278,14 +1432,57 @@ setInterval(updateClock, 10000);
 
 // ── Suporte a teclado ──
 document.addEventListener('DOMContentLoaded', () => {
+  // Limpa erro ao digitar
   ['novoNome','novoTel','pagValor'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => el.classList.remove('error'));
   });
+
+  // Suporte a teclado em elementos com role=button
   document.querySelectorAll('[role="button"]').forEach(el => {
     el.addEventListener('keydown', e => {
       if (e.key==='Enter'||e.key===' ') { e.preventDefault(); el.click(); }
     });
+  });
+
+  // Formatador de telefone: (XX) XXXXX-XXXX
+  document.querySelectorAll('.fmt-tel').forEach(el => {
+    el.addEventListener('input', () => {
+      let v = el.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length === 0) { el.value = ''; return; }
+      if (v.length <= 2) v = '(' + v;
+      else if (v.length <= 7) v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+      else v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+      el.value = v;
+    });
+  });
+
+  // Formatador de data curta: DD/MM
+  document.querySelectorAll('.fmt-data-curta').forEach(el => {
+    el.addEventListener('input', () => {
+      let v = el.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+      el.value = v;
+    });
+  });
+
+  // Formatador de moeda: R$ 0,00
+  document.querySelectorAll('.fmt-moeda').forEach(el => {
+    el.addEventListener('input', () => {
+      let v = el.value.replace(/\D/g, '');
+      if (!v) { el.value = ''; return; }
+      v = (parseInt(v) / 100).toFixed(2);
+      el.value = 'R$ ' + v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    });
+  });
+
+  // Fecha dropdown de clientes ao clicar fora
+  document.addEventListener('click', e => {
+    const dd = document.getElementById('agClienteDropdown');
+    const input = document.getElementById('agCliente');
+    if (dd && !dd.contains(e.target) && e.target !== input) {
+      dd.style.display = 'none';
+    }
   });
 });
 
