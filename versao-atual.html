@@ -1250,7 +1250,7 @@
         <div class="card card-tight" id="listaLancamentos"></div>
         <div style="display:flex;gap:10px;">
           <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Pagamento</button>
-          <button class="btn-outline" style="flex:1;" onclick="mostrarToast('Em breve: registro de saídas')">+ Saída</button>
+          <button class="btn-outline" style="flex:1;" onclick="ir('saida')">+ Despesa</button>
         </div>
       </div>
       <div class="tab-bar">
@@ -1314,6 +1314,49 @@
       </div>
     </div>
 
+    <!-- ═══════════ REGISTRAR SAÍDA ═══════════ -->
+    <div class="screen" id="screen-saida" data-screen-label="Registrar Saída">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('financeiro')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Registrar despesa</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="input-group">
+          <label class="input-label">Tipo de despesa</label>
+          <input class="input-field" id="saidaDescricao" type="text" placeholder="Ex: conta de luz, aluguel, imposto...">
+          <span class="field-error" id="errSaidaDescricao">Informe o tipo de despesa</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Valor</label>
+          <input class="input-field fmt-moeda" id="saidaValor" type="text" placeholder="R$ 0,00" inputmode="numeric" required style="font-family:var(--font-display);font-size:30px;font-weight:600;color:var(--danger-700);letter-spacing:-0.02em;padding:14px;">
+          <span class="field-error" id="errSaidaValor">Informe o valor</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Como foi pago?</label>
+          <div class="seg" style="margin-top:4px;">
+            <div class="seg-item active" onclick="selPagSaida(this)">Pix</div>
+            <div class="seg-item" onclick="selPagSaida(this)">Cartão</div>
+            <div class="seg-item" onclick="selPagSaida(this)">Dinheiro</div>
+          </div>
+        </div>
+        <button class="btn-primary" style="background:var(--danger-700);" onclick="registrarSaida()">Confirmar saída</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ SUCESSO SAÍDA ═══════════ -->
+    <div class="screen" id="screen-saida-sucesso" data-screen-label="Sucesso Saída">
+      <div class="success-screen">
+        <div class="success-icon" style="background:var(--danger-100);"><svg viewBox="0 0 24 24" stroke="var(--danger-700)"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="success-title">Despesa registrada!</div>
+        <div class="success-sub">O lançamento foi salvo no seu caixa.</div>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('financeiro')">Ver financeiro</button>
+        <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
+      </div>
+    </div>
+
     <!-- ═══════════ ESTOQUE ═══════════ -->
     <div class="screen" id="screen-estoque" data-screen-label="08 Estoque">
       <div class="s-header">
@@ -1367,16 +1410,12 @@
         </div>
         <div class="card card-tight" id="reposicaoLista"></div>
         <div class="card" style="background:var(--ink-100);border:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--ink-200);margin-bottom:10px;">
-            <span style="font-size:13px;color:var(--ink-500);font-weight:500;">Frete</span>
-            <span style="font-size:13px;color:var(--ink-900);font-weight:600;">R$ 18,00</span>
-          </div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
             <span style="font-size:13px;color:var(--ink-500);font-weight:500;">Total do pedido</span>
-            <span style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--ink-900);letter-spacing:-0.02em;" id="totalPedido">R$ 18,00</span>
+            <span style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--ink-900);letter-spacing:-0.02em;" id="totalPedido">R$ 0,00</span>
           </div>
         </div>
-        <button class="btn-primary" onclick="ir('reposicao-sucesso')">Confirmar pedido</button>
+        <button class="btn-primary" onclick="confirmarReposicao()">Confirmar pedido</button>
       </div>
     </div>
 
@@ -1410,6 +1449,11 @@
           <label class="input-label">Quantidade inicial</label>
           <input class="input-field" type="number" id="prodQtd" placeholder="0" min="0" inputmode="numeric">
           <span class="field-error" id="errProdQtd">Informe a quantidade</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Preço unitário</label>
+          <input class="input-field fmt-moeda" type="text" id="prodPreco" placeholder="R$ 0,00" inputmode="numeric">
+          <span class="field-error" id="errProdPreco">Informe o preço</span>
         </div>
         <button class="btn-primary" onclick="salvarProduto()">Cadastrar produto</button>
       </div>
@@ -2129,6 +2173,40 @@ async function validarPagamento() {
   ir('pagamento-sucesso');
 }
 
+let formaPagSaidaSelecionada = 'Pix';
+
+function selPagSaida(btn) {
+  formaPagSaidaSelecionada = btn.textContent.trim();
+  btn.parentElement.querySelectorAll('.seg-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function registrarSaida() {
+  const descricao = document.getElementById('saidaDescricao').value.trim();
+  const valStr    = document.getElementById('saidaValor').value.trim();
+  mostrarErro('saidaDescricao', 'errSaidaDescricao', !descricao);
+  mostrarErro('saidaValor',     'errSaidaValor',     !valStr || valStr === 'R$ 0,00');
+  if (!descricao || !valStr || valStr === 'R$ 0,00') return;
+
+  const valor = valStr.replace('R$','').replace(/\./g,'').replace(',','.').trim();
+  const registro = {
+    id: Date.now().toString(),
+    tipo: 'saida',
+    descricao,
+    valor: parseFloat(valor).toFixed(2),
+    forma: formaPagSaidaSelecionada,
+    data: new Date().toLocaleDateString('pt-BR'),
+    hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  mostrarToast('Salvando...');
+  await sheetsPost('Financeiro', registro);
+  lancamentos.push(registro);
+  document.getElementById('saidaDescricao').value = '';
+  document.getElementById('saidaValor').value = '';
+  ir('saida-sucesso');
+}
+
 // ═══════════════════════════════════════════════
 // ESTOQUE
 // ═══════════════════════════════════════════════
@@ -2175,18 +2253,22 @@ function renderEstoque() {
 }
 
 async function salvarProduto() {
-  const nome = document.getElementById('prodNome').value.trim();
-  const qtd  = document.getElementById('prodQtd').value;
-  mostrarErro('prodNome', 'errProdNome', !nome);
-  mostrarErro('prodQtd',  'errProdQtd',  qtd === '' || qtd === null);
-  if (!nome || qtd === '' || qtd === null) return;
+  const nome  = document.getElementById('prodNome').value.trim();
+  const qtd   = document.getElementById('prodQtd').value;
+  const precoStr = document.getElementById('prodPreco').value.trim();
+  mostrarErro('prodNome',  'errProdNome',  !nome);
+  mostrarErro('prodQtd',   'errProdQtd',   qtd === '' || qtd === null);
+  mostrarErro('prodPreco', 'errProdPreco', !precoStr || precoStr === 'R$ 0,00');
+  if (!nome || qtd === '' || !precoStr || precoStr === 'R$ 0,00') return;
 
-  const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0 };
+  const preco = parseFloat(precoStr.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
+  const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0, preco };
   mostrarToast('Salvando...');
   await sheetsPost('Estoque', registro);
   estoque.push(registro);
-  document.getElementById('prodNome').value = '';
-  document.getElementById('prodQtd').value  = '';
+  document.getElementById('prodNome').value  = '';
+  document.getElementById('prodQtd').value   = '';
+  document.getElementById('prodPreco').value = '';
   mostrarToast('Produto cadastrado!');
   ir('estoque');
 }
@@ -2195,6 +2277,27 @@ function abrirReposicao(id) {
   produtoReposicaoId = id;
   ir('reposicao');
   renderReposicao();
+}
+
+async function confirmarReposicao() {
+  // Lê o total do pedido direto do elemento
+  const totalStr = document.getElementById('totalPedido').textContent;
+  const valor = totalStr.replace('R$','').replace(/\./g,'').replace(',','.').trim();
+
+  const registro = {
+    id: Date.now().toString(),
+    tipo: 'saida',
+    descricao: 'Reposição de estoque',
+    valor: parseFloat(valor).toFixed(2),
+    forma: 'Outros',
+    data: new Date().toLocaleDateString('pt-BR'),
+    hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  mostrarToast('Salvando...');
+  await sheetsPost('Financeiro', registro);
+  lancamentos.push(registro);
+  ir('reposicao-sucesso');
 }
 
 function renderReposicao() {
@@ -2217,6 +2320,7 @@ function renderReposicao() {
           <span style="${isCritico ? 'color:var(--danger-700);font-weight:700;' : 'color:var(--ink-700);font-weight:600;'}">${qty} un.</span>
           ${isCritico ? '<span class="tag-red">Crítico</span>' : ''}
         </div>
+        <div style="font-size:11px;color:var(--ink-400);margin-top:2px;">R$ ${parseFloat(p.preco||0).toFixed(2).replace('.',',')} / un.</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <span style="font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Qtde</span>
@@ -2224,7 +2328,7 @@ function renderReposicao() {
           style="width:60px;text-align:center;font-size:15px;font-weight:700;border:1.5px solid var(--ink-200);border-radius:10px;padding:6px 4px;font-family:inherit;outline:none;"
           onfocus="this.style.borderColor='var(--brand-500)'"
           onblur="this.style.borderColor='var(--ink-200)'"
-          class="qty-input" data-price="0">
+          class="qty-input" data-price="${parseFloat(p.preco||0)}">
       </div>
     </div>`;
   }).join('');
@@ -2313,7 +2417,7 @@ function selPag(btn) {
 }
 
 function recalcTotal() {
-  let total = 18;
+  let total = 0;
   document.querySelectorAll('#screen-reposicao .qty-input').forEach(input => {
     total += (parseInt(input.value)||0) * (parseFloat(input.dataset.price)||0);
   });
