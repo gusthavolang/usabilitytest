@@ -127,12 +127,13 @@
 
   /* ── Responsivo: mobile ── */
   @media (max-width: 700px) {
+    html { height: 100dvh; }
     html, body { padding: 0; align-items: stretch; background: var(--surface); }
-    body { background-image: none; }
-    .outer { flex-direction: column; align-items: center; gap: 0; padding: 0; }
-    .phone-col { gap: 0; width: 100%; }
+    body { background-image: none; height: 100%; }
+    .outer { flex-direction: column; align-items: center; gap: 0; padding: 0; height: 100%; }
+    .phone-col { gap: 0; width: 100%; height: 100%; }
     .phone-caption { display: none; }
-    .phone { width: 100%; height: 100dvh; border-radius: 0; padding: 0; box-shadow: none; }
+    .phone { width: 100%; height: 100%; border-radius: 0; padding: 0; box-shadow: none; }
     .phone-inner { border-radius: 0; }
     .notch::before { display: none; }
     .notch { padding-top: env(safe-area-inset-top, 8px); }
@@ -1062,6 +1063,10 @@
           </select>
           </div>
         </div>
+        <div class="input-group">
+          <label class="input-label">Profissional (opcional)</label>
+          <input class="input-field" id="agProfissional" type="text" placeholder="Ex: Ana, João..." style="background:#f7f7f7;">
+        </div>
         <div style="display:flex;align-items:center;gap:8px;padding:8px 0;">
           <svg width="14" height="14" fill="none" stroke-width="2" stroke="#1D9E75" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
           <span style="font-size:11px;color:#888;">Lembrete automático ativado — o cliente receberá aviso no WhatsApp</span>
@@ -1227,6 +1232,8 @@
         <div class="card" style="padding:16px;">
           <div class="bar-chart" id="barChart"></div>
         </div>
+        <div class="section-label">Hoje por forma de pagamento</div>
+        <div class="card" style="padding:14px 16px;" id="formaChart"></div>
         <div style="display:flex;gap:8px;">
           <select id="filtroServico" onchange="renderFinanceiro()" class="input-field" style="flex:1;font-size:13px;padding:10px 12px;padding-right:32px;">
             <option value="">Todos os serviços</option>
@@ -1237,6 +1244,7 @@
             <option>Hidratação</option>
             <option>Manicure</option>
             <option>Pedicure</option>
+            <option>Venda de produto</option>
             <option>Outro</option>
           </select>
           <select id="filtroForma" onchange="renderFinanceiro()" class="input-field" style="flex:1;font-size:13px;padding:10px 12px;padding-right:32px;">
@@ -1283,8 +1291,16 @@
             <option>Hidratação</option>
             <option>Manicure</option>
             <option>Pedicure</option>
+            <option>Venda de produto</option>
             <option>Outro</option>
           </select>
+        </div>
+        <div class="input-group" id="pagProdutoGroup" style="display:none;flex-direction:column;gap:6px;">
+          <label class="input-label">Produto vendido</label>
+          <select class="input-field" id="pagProduto" style="background:#f7f7f7;appearance:none;">
+            <option value="">Selecionar produto...</option>
+          </select>
+          <span style="font-size:11px;color:var(--brand-700);font-weight:500;">O estoque será atualizado automaticamente ao confirmar</span>
         </div>
         <div class="input-group">
           <label class="input-label">Valor recebido</label>
@@ -1529,7 +1545,7 @@
             <div class="toggle" onclick="this.classList.toggle('off')"></div>
           </div>
           <div class="toggle-row">
-            <div><div class="toggle-label">Clientes sem retorno</div><div class="toggle-sub">Avisar após 30 dias sem visita</div></div>
+            <div><div class="toggle-label">Clientes sem retorno</div><div class="toggle-sub">Avisar após 3 meses sem visita</div></div>
             <div class="toggle" onclick="this.classList.toggle('off')"></div>
           </div>
           <div class="toggle-row" style="border-bottom:none;">
@@ -1550,6 +1566,37 @@
         <div class="tab" onclick="ir('clientes')" role="button" aria-label="Clientes" tabindex="0"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
         <div class="tab" onclick="ir('financeiro')" role="button" aria-label="Financeiro" tabindex="0"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
         <div class="tab" onclick="ir('estoque')" role="button" aria-label="Estoque" tabindex="0"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Estoque</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ DAR BAIXA ESTOQUE ═══════════ -->
+    <div class="screen" id="screen-estoque-baixa" data-screen-label="Dar Baixa">
+      <div class="s-header">
+        <div class="s-header-row">
+          <div class="back-btn" onclick="ir('estoque')" role="button" aria-label="Voltar" tabindex="0"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Voltar</span></div>
+          <div class="title" style="font-size:15px;">Dar baixa</div>
+          <div style="width:52px;"></div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="card" style="background:var(--brand-50);border-color:var(--brand-100);">
+          <div id="baixaProdutoNome" style="font-size:15px;font-weight:700;color:var(--ink-900);"></div>
+          <div id="baixaProdutoQty" style="font-size:13px;color:var(--ink-500);margin-top:4px;"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Quantidade retirada</label>
+          <input class="input-field" type="number" id="baixaQtd" min="1" placeholder="0" inputmode="numeric">
+          <span class="field-error" id="errBaixaQtd">Informe a quantidade</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Motivo</label>
+          <div class="seg" style="margin-top:4px;">
+            <div class="seg-item active" onclick="selMotivoBaixa(this)">Serviço</div>
+            <div class="seg-item" onclick="selMotivoBaixa(this)">Venda</div>
+            <div class="seg-item" onclick="selMotivoBaixa(this)">Uso próprio</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="confirmarBaixa()">Confirmar baixa</button>
       </div>
     </div>
 
@@ -1630,7 +1677,7 @@ function ir(id) {
   if (id === 'reposicao') recalcTotal();
   // Limpa formulário de agendamento ao abrir
   if (id === 'agenda-novo') {
-    const campos = ['agCliente', 'agendaData'];
+    const campos = ['agCliente', 'agendaData', 'agProfissional'];
     campos.forEach(c => { const el = document.getElementById(c); if (el) el.value = ''; });
     const sel = document.getElementById('agServico');
     if (sel) sel.selectedIndex = 0;
@@ -1977,25 +2024,31 @@ function renderAgenda() {
     return;
   }
 
-  const horarios = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
-  el.innerHTML = '<div class="card" style="padding:8px 14px;display:flex;flex-direction:column;gap:6px;">' + horarios.map(h => {
-    const ag = agendaHoje.find(a => a.horario === h);
-    if (ag) {
-      const cancelado = ag.status === 'Cancelado';
-      if (cancelado) return '';
+  const horarios = [
+    '08:00','08:30','09:00','09:30','10:00','10:30',
+    '11:00','11:30','12:00','12:30','13:00','13:30',
+    '14:00','14:30','15:00','15:30','16:00','16:30',
+    '17:00','17:30','18:00','18:30','19:00'
+  ];
+  el.innerHTML = '<div class="card" style="padding:8px 14px;display:flex;flex-direction:column;gap:4px;">' + horarios.map(h => {
+    const ags = agendaHoje.filter(a => a.horario === h);
+    if (ags.length > 0) {
       return `
       <div class="agenda-slot">
         <div class="agenda-time">${h}</div>
-        <div class="agenda-block filled" onclick="verAgendamento('${ag.id}')" style="cursor:pointer;">
-          <div class="aname">${ag.cliente}</div>
-          <div class="asvc">${ag.servico}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          ${ags.map(ag => `
+          <div class="agenda-block filled" onclick="verAgendamento('${ag.id}')" style="cursor:pointer;">
+            <div class="aname">${ag.cliente}${ag.profissional ? ' <span style="font-size:11px;font-weight:500;color:var(--ink-500);">· ' + ag.profissional + '</span>' : ''}</div>
+            <div class="asvc">${ag.servico}</div>
+          </div>`).join('')}
         </div>
       </div>`;
     }
     return `
-      <div class="agenda-slot">
+      <div class="agenda-slot" style="min-height:40px;">
         <div class="agenda-time">${h}</div>
-        <div class="agenda-block empty" onclick="ir('agenda-novo')"><span>Disponível</span></div>
+        <div class="agenda-block empty" style="min-height:32px;" onclick="ir('agenda-novo')"><span>—</span></div>
       </div>`;
   }).join('') + '</div>' + `<button class="btn-primary" style="margin-top:6px;" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
 }
@@ -2010,12 +2063,14 @@ async function salvarAgendamento() {
     mostrarToast('Preencha todos os campos', 'erro'); return;
   }
 
+  const profissional = (document.getElementById('agProfissional')?.value || '').trim();
   const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
   const registro = {
     id: Date.now().toString(),
     cliente, servico,
     data: dataFormatada,
     horario,
+    profissional,
     status: 'Confirmado',
     dataCriacao: new Date().toLocaleDateString('pt-BR')
   };
@@ -2049,6 +2104,11 @@ function verAgendamento(id) {
           <div class="qa-icon tone-amber"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--warn-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H6a3 3 0 010-6h3M15 11h3a3 3 0 000-6h-3M9 5v14M15 5v14M6 17h12"/></svg></div>
           <div style="flex:1;"><div class="item-sub">Serviço</div><div class="item-name">${ag.servico}</div></div>
         </div>
+        ${ag.profissional ? `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="qa-icon tone-violet"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6B49D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+          <div style="flex:1;"><div class="item-sub">Profissional</div><div class="item-name">${ag.profissional}</div></div>
+        </div>` : ''}
       </div>
     </div>
     ${!cancelado ? `
@@ -2123,6 +2183,36 @@ function renderFinanceiro() {
     }).join('');
   }
 
+  // Gráfico por forma de pagamento (hoje, sem filtro)
+  const formaEl = document.getElementById('formaChart');
+  if (formaEl) {
+    const lancHojeAll = lancamentos.filter(l => l.data === hoje && l.tipo === 'entrada');
+    const formas = ['Pix', 'Cartão', 'Dinheiro'];
+    const cores = { 'Pix': 'var(--brand-600)', 'Cartão': 'var(--info-700)', 'Dinheiro': 'var(--warn-700)' };
+    const totaisPorForma = {};
+    formas.forEach(f => {
+      totaisPorForma[f] = lancHojeAll.filter(l => l.forma === f).reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+    });
+    const totalGeral = formas.reduce((s,f) => s + totaisPorForma[f], 0);
+    if (totalGeral === 0) {
+      formaEl.innerHTML = '<div style="font-size:13px;color:var(--ink-400);text-align:center;padding:6px 0;">Nenhum recebimento registrado hoje</div>';
+    } else {
+      formaEl.innerHTML = formas.map(f => {
+        const val = totaisPorForma[f];
+        const pct = Math.round((val / totalGeral) * 100);
+        return `<div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <span style="font-size:12px;font-weight:700;color:${cores[f]};">${f}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--ink-900);">R$ ${val.toFixed(2).replace('.',',')} <span style="font-size:11px;font-weight:500;color:var(--ink-400);">(${pct}%)</span></span>
+          </div>
+          <div style="height:8px;border-radius:4px;background:var(--ink-100);overflow:hidden;">
+            <div style="height:100%;width:${pct}%;border-radius:4px;background:${cores[f]};"></div>
+          </div>
+        </div>`;
+      }).join('') + `<div style="font-size:11px;color:var(--ink-400);text-align:center;padding-top:8px;border-top:1px solid var(--ink-100);margin-top:2px;">Pix = caixa imediato · Cartão = a conciliar</div>`;
+    }
+  }
+
   const elLanc = document.getElementById('listaLancamentos');
   if (!elLanc) return;
   if (!lancHoje.length) {
@@ -2169,6 +2259,20 @@ async function validarPagamento() {
   mostrarToast('Salvando...');
   await sheetsPost('Financeiro', registro);
   lancamentos.push(registro);
+
+  // Desconta estoque se for venda de produto
+  if (document.getElementById('pagServico').value === 'Venda de produto') {
+    const prodId = document.getElementById('pagProduto')?.value;
+    if (prodId) {
+      const p = estoque.find(x => String(x.id) === String(prodId));
+      if (p && parseInt(p.quantidade) > 0) {
+        const novaQty = parseInt(p.quantidade) - 1;
+        await sheetsUpdate('Estoque', prodId, 'quantidade', novaQty);
+        p.quantidade = novaQty;
+      }
+    }
+  }
+
   document.getElementById('pagValor').value = '';
   ir('pagamento-sucesso');
 }
@@ -2247,7 +2351,10 @@ function renderEstoque() {
           <div class="pname">${p.nome}</div>
           <div class="product-qty">${qty} unidade${qty !== 1 ? 's' : ''} ${tag}</div>
         </div>
-        ${qty <= 5 ? `<button class="repor-btn" onclick="abrirReposicao('${String(p.id)}')">Repor</button>` : ''}
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          ${qty <= 5 ? `<button class="repor-btn" onclick="abrirReposicao('${String(p.id)}')">Repor</button>` : ''}
+          ${qty > 0 ? `<button class="repor-btn" style="background:var(--ink-700);" onclick="abrirBaixa('${String(p.id)}')">− Baixa</button>` : `<span style="font-size:11px;color:var(--danger-500);font-weight:700;white-space:nowrap;">Sem estoque</span>`}
+        </div>
       </div>`;
   }).join('');
 }
@@ -2277,6 +2384,54 @@ function abrirReposicao(id) {
   produtoReposicaoId = id;
   ir('reposicao');
   renderReposicao();
+}
+
+let produtoBaixaId = null;
+let motivoBaixaSelecionado = 'Serviço';
+
+function abrirBaixa(id) {
+  produtoBaixaId = id;
+  const p = estoque.find(x => String(x.id) === String(id));
+  if (!p) return;
+  document.getElementById('baixaProdutoNome').textContent = p.nome;
+  document.getElementById('baixaProdutoQty').textContent = parseInt(p.quantidade) + ' unidades em estoque';
+  document.getElementById('baixaQtd').value = '';
+  const errEl = document.getElementById('errBaixaQtd');
+  if (errEl) errEl.textContent = 'Informe a quantidade';
+  mostrarErro('baixaQtd', 'errBaixaQtd', false);
+  document.querySelectorAll('#screen-estoque-baixa .seg-item').forEach((el, i) => {
+    el.classList.toggle('active', i === 0);
+  });
+  motivoBaixaSelecionado = 'Serviço';
+  ir('estoque-baixa');
+}
+
+function selMotivoBaixa(btn) {
+  motivoBaixaSelecionado = btn.textContent.trim();
+  btn.parentElement.querySelectorAll('.seg-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function confirmarBaixa() {
+  const qtd = parseInt(document.getElementById('baixaQtd').value);
+  const p = estoque.find(x => String(x.id) === String(produtoBaixaId));
+  if (!qtd || qtd <= 0) {
+    document.getElementById('errBaixaQtd').textContent = 'Informe a quantidade';
+    mostrarErro('baixaQtd', 'errBaixaQtd', true);
+    return;
+  }
+  if (!p) { mostrarToast('Produto não encontrado', 'erro'); return; }
+  if (qtd > parseInt(p.quantidade)) {
+    document.getElementById('errBaixaQtd').textContent = 'Quantidade maior que o estoque disponível';
+    mostrarErro('baixaQtd', 'errBaixaQtd', true);
+    return;
+  }
+  const novaQty = parseInt(p.quantidade) - qtd;
+  mostrarToast('Salvando...');
+  await sheetsUpdate('Estoque', produtoBaixaId, 'quantidade', novaQty);
+  if (p) p.quantidade = novaQty;
+  mostrarToast('Baixa registrada!');
+  ir('estoque');
 }
 
 async function confirmarReposicao() {
@@ -2511,6 +2666,23 @@ document.addEventListener('DOMContentLoaded', () => {
       dd.style.display = 'none';
     }
   });
+
+  // Mostra seletor de produto ao escolher "Venda de produto" no pagamento
+  const pagServicoEl = document.getElementById('pagServico');
+  if (pagServicoEl) {
+    pagServicoEl.addEventListener('change', function() {
+      const grp = document.getElementById('pagProdutoGroup');
+      if (!grp) return;
+      if (this.value === 'Venda de produto') {
+        grp.style.display = 'flex';
+        const sel = document.getElementById('pagProduto');
+        if (sel) sel.innerHTML = '<option value="">Selecionar produto...</option>' +
+          estoque.map(p => `<option value="${p.id}">${p.nome} (${parseInt(p.quantidade)||0} un.)</option>`).join('');
+      } else {
+        grp.style.display = 'none';
+      }
+    });
+  }
 });
 
 </script>
