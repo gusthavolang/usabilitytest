@@ -127,16 +127,18 @@
 
   /* ── Responsivo: mobile ── */
   @media (max-width: 700px) {
-    html { height: 100dvh; }
-    html, body { padding: 0; align-items: stretch; background: var(--surface); }
-    body { background-image: none; height: 100%; }
-    .outer { flex-direction: column; align-items: center; gap: 0; padding: 0; height: 100%; }
-    .phone-col { gap: 0; width: 100%; height: 100%; }
+    html { height: 100vh; height: 100dvh; overflow: hidden; }
+    body { height: 100vh; height: 100dvh; min-height: unset; padding: 0; margin: 0; background: var(--surface); background-image: none; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
+    .outer { flex: 1; min-height: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 0; width: 100%; }
+    .phone-col { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 0; }
+    .phone { flex: 1; min-height: 0; width: 100%; border-radius: 0; padding: 0; box-shadow: none; display: flex; flex-direction: column; }
+    .phone-inner { flex: 1; min-height: 0; width: 100%; height: 100%; border-radius: 0; display: flex; flex-direction: column; }
     .phone-caption { display: none; }
-    .phone { width: 100%; height: 100%; border-radius: 0; padding: 0; box-shadow: none; }
-    .phone-inner { border-radius: 0; }
-    .notch::before { display: none; }
-    .notch { padding-top: env(safe-area-inset-top, 8px); }
+    .notch { display: none; } /* mobile tem status bar nativo */
+    /* Data e horário empilhados no mobile */
+    .data-hora-row { flex-direction: column !important; }
+    /* Calendário não ultrapassa o card */
+    .cal-grid { overflow: hidden; }
   }
 
   /* ── Screens ── */
@@ -1039,7 +1041,7 @@
             <option>Outro</option>
           </select>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div class="data-hora-row" style="display:flex;gap:8px;">
           <div class="input-group" style="flex:1">
             <label class="input-label">Data</label>
             <input class="input-field" id="agendaData" type="date" style="background:#f7f7f7;color:#1a1a1a;">
@@ -1420,9 +1422,9 @@
         </div>
       </div>
       <div class="scroll">
-        <div class="card" style="background:var(--brand-50);border-color:var(--brand-100);">
-          <div style="font-size:13px;color:var(--brand-800);font-weight:700;margin-bottom:2px;">Sugeridos para você</div>
-          <div style="font-size:12px;color:var(--brand-700);font-weight:500;">Baseado no seu estoque atual</div>
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+          <input placeholder="Buscar produto..." oninput="filtrarReposicao(this.value)" id="buscaReposicao">
         </div>
         <div class="card card-tight" id="reposicaoLista"></div>
         <div class="card" style="background:var(--ink-100);border:none;">
@@ -1579,7 +1581,13 @@
         </div>
       </div>
       <div class="scroll">
-        <div class="card" style="background:var(--brand-50);border-color:var(--brand-100);">
+        <div class="input-group">
+          <label class="input-label">Produto</label>
+          <select class="input-field" id="baixaProdutoSelect" onchange="selecionarProdutoBaixa(this.value)">
+            <option value="">Selecionar produto...</option>
+          </select>
+        </div>
+        <div class="card" style="background:var(--brand-50);border-color:var(--brand-100);display:none;" id="baixaInfoCard">
           <div id="baixaProdutoNome" style="font-size:15px;font-weight:700;color:var(--ink-900);"></div>
           <div id="baixaProdutoQty" style="font-size:13px;color:var(--ink-500);margin-top:4px;"></div>
         </div>
@@ -2245,6 +2253,10 @@ async function validarPagamento() {
   }
   mostrarErro('pagValor', 'errValor', false);
 
+  // Bloqueia double-click
+  const btn = document.querySelector('#screen-financeiro-pagamento .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
   const valor = valStr.replace('R$','').replace(/\./g,'').replace(',','.').trim();
   const registro = {
     id: Date.now().toString(),
@@ -2259,6 +2271,8 @@ async function validarPagamento() {
   mostrarToast('Salvando...');
   await sheetsPost('Financeiro', registro);
   lancamentos.push(registro);
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Confirmar pagamento'; }
 
   // Desconta estoque se for venda de produto
   if (document.getElementById('pagServico').value === 'Venda de produto') {
@@ -2390,20 +2404,37 @@ let produtoBaixaId = null;
 let motivoBaixaSelecionado = 'Serviço';
 
 function abrirBaixa(id) {
-  produtoBaixaId = id;
-  const p = estoque.find(x => String(x.id) === String(id));
-  if (!p) return;
-  document.getElementById('baixaProdutoNome').textContent = p.nome;
-  document.getElementById('baixaProdutoQty').textContent = parseInt(p.quantidade) + ' unidades em estoque';
+  // Popula o select com todos os produtos
+  const sel = document.getElementById('baixaProdutoSelect');
+  if (sel) {
+    sel.innerHTML = '<option value="">Selecionar produto...</option>' +
+      estoque.map(p => `<option value="${p.id}">${p.nome} (${parseInt(p.quantidade)||0} un.)</option>`).join('');
+    sel.value = id || '';
+  }
   document.getElementById('baixaQtd').value = '';
-  const errEl = document.getElementById('errBaixaQtd');
-  if (errEl) errEl.textContent = 'Informe a quantidade';
   mostrarErro('baixaQtd', 'errBaixaQtd', false);
   document.querySelectorAll('#screen-estoque-baixa .seg-item').forEach((el, i) => {
     el.classList.toggle('active', i === 0);
   });
   motivoBaixaSelecionado = 'Serviço';
+  // Pré-seleciona produto se veio de um produto específico
+  if (id) selecionarProdutoBaixa(id);
+  else {
+    produtoBaixaId = null;
+    const card = document.getElementById('baixaInfoCard');
+    if (card) card.style.display = 'none';
+  }
   ir('estoque-baixa');
+}
+
+function selecionarProdutoBaixa(id) {
+  produtoBaixaId = id;
+  const p = estoque.find(x => String(x.id) === String(id));
+  const card = document.getElementById('baixaInfoCard');
+  if (!p || !id) { if (card) card.style.display = 'none'; return; }
+  document.getElementById('baixaProdutoNome').textContent = p.nome;
+  document.getElementById('baixaProdutoQty').textContent = parseInt(p.quantidade) + ' unidades em estoque';
+  if (card) card.style.display = 'block';
 }
 
 function selMotivoBaixa(btn) {
@@ -2413,14 +2444,20 @@ function selMotivoBaixa(btn) {
 }
 
 async function confirmarBaixa() {
-  const qtd = parseInt(document.getElementById('baixaQtd').value);
+  // Garante que produto foi selecionado (pode ter sido pelo select)
+  const selVal = document.getElementById('baixaProdutoSelect')?.value;
+  if (selVal && selVal !== produtoBaixaId) selecionarProdutoBaixa(selVal);
+
+  if (!produtoBaixaId) { mostrarToast('Selecione um produto', 'erro'); return; }
   const p = estoque.find(x => String(x.id) === String(produtoBaixaId));
+  if (!p) { mostrarToast('Produto não encontrado', 'erro'); return; }
+
+  const qtd = parseInt(document.getElementById('baixaQtd').value);
   if (!qtd || qtd <= 0) {
     document.getElementById('errBaixaQtd').textContent = 'Informe a quantidade';
     mostrarErro('baixaQtd', 'errBaixaQtd', true);
     return;
   }
-  if (!p) { mostrarToast('Produto não encontrado', 'erro'); return; }
   if (qtd > parseInt(p.quantidade)) {
     document.getElementById('errBaixaQtd').textContent = 'Quantidade maior que o estoque disponível';
     mostrarErro('baixaQtd', 'errBaixaQtd', true);
@@ -2455,15 +2492,28 @@ async function confirmarReposicao() {
   ir('reposicao-sucesso');
 }
 
+function filtrarReposicao(termo) {
+  const filtrados = termo.trim()
+    ? estoque.filter(p => p.nome.toLowerCase().includes(termo.toLowerCase()))
+    : estoque;
+  renderReposicaoLista(filtrados);
+}
+
 function renderReposicao() {
-  const lista = document.getElementById('reposicaoLista');
-  if (!lista) return;
-  if (!estoque.length) {
-    lista.innerHTML = '<div class="empty-state" style="padding:18px 4px;"><div class="empty-state-sub">Nenhum produto cadastrado</div></div>';
+  const busca = document.getElementById('buscaReposicao');
+  if (busca) busca.value = '';
+  renderReposicaoLista(estoque);
+}
+
+function renderReposicaoLista(lista) {
+  const el = document.getElementById('reposicaoLista');
+  if (!el) return;
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:18px 4px;"><div class="empty-state-sub">Nenhum produto encontrado</div></div>';
     recalcTotal();
     return;
   }
-  lista.innerHTML = estoque.map(p => {
+  el.innerHTML = lista.map(p => {
     const qty = parseInt(p.quantidade) || 0;
     const isCritico = qty <= 2;
     return `<div class="product-row">
