@@ -132,7 +132,7 @@
     .outer { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; gap: 0; padding: 0; }
     .phone-col { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 0; }
     .phone { flex: 1; min-height: 0; width: 100%; border-radius: 0; padding: 0; box-shadow: none; display: flex; flex-direction: column; }
-    .phone-inner { flex: 1; min-height: 0; width: 100%; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .phone-inner { flex: 1; min-height: 0; width: 100%; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top, 0px); }
     .phone-caption { display: none; }
     .notch { display: none; }
     .data-hora-row { flex-direction: column !important; }
@@ -1237,6 +1237,10 @@
             </div>
           </div>
         </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Pagamento</button>
+          <button class="btn-outline" style="flex:1;" onclick="ir('saida')">+ Despesa</button>
+        </div>
         <div class="section-label">Últimos 7 dias</div>
         <div class="card" style="padding:16px;">
           <div class="bar-chart" id="barChart"></div>
@@ -1265,10 +1269,6 @@
         </div>
         <div class="section-label">Lançamentos de hoje</div>
         <div class="card card-tight" id="listaLancamentos"></div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn-primary" style="flex:1;" onclick="ir('financeiro-pagamento')">+ Pagamento</button>
-          <button class="btn-outline" style="flex:1;" onclick="ir('saida')">+ Despesa</button>
-        </div>
       </div>
       <div class="tab-bar">
         <div class="tab" onclick="ir('home')" role="button" aria-label="Início" tabindex="0"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
