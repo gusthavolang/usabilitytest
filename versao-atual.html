@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0E6B4F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════════
      DESIGN TOKENS
@@ -65,8 +65,8 @@
     --shadow-brand: 0 8px 24px rgba(18,134,97,0.28);
 
     /* Type */
-    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-display: 'Newsreader', 'DM Sans', serif;
+    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Roboto', sans-serif;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -608,15 +608,24 @@
     height: 88px; padding: 4px 0; overflow: hidden;
   }
   .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
-  .bar {
+  .bar-stack {
     width: 100%; max-width: 28px;
-    border-radius: 6px 6px 0 0;
-    background: var(--brand-100);
+    display: flex; flex-direction: column-reverse;
+    border-radius: 6px 6px 0 0; overflow: hidden;
     min-height: 6px;
-    transition: background 0.2s;
   }
-  .bar.today { background: linear-gradient(180deg, var(--brand-500), var(--brand-700)); }
+  .bar-seg { width: 100%; transition: height 0.3s ease; }
+  .bar-seg.pix     { background: var(--brand-600); }
+  .bar-seg.cartao  { background: #4B7FCC; }
+  .bar-seg.dinheiro{ background: var(--warn-500); }
+  .bar-seg.empty   { background: var(--ink-100); }
+  .bar-col.today .bar-seg.pix      { background: var(--brand-700); }
+  .bar-col.today .bar-seg.cartao   { background: #2C5FA8; }
+  .bar-col.today .bar-seg.dinheiro { background: var(--warn-700); }
   .bar-day { font-size: 10px; color: var(--ink-400); font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.03em; }
+  /* Ícone de olho para esconder saldo */
+  .hero-eye { background: none; border: none; cursor: pointer; opacity: 0.7; padding: 0 0 0 8px; vertical-align: middle; }
+  .hero-eye svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
 
   /* ── Back button ── */
   .back-btn {
@@ -914,7 +923,7 @@
         <!-- Hero: caixa de hoje -->
         <div class="hero">
           <div class="hero-greeting">Caixa de hoje</div>
-          <div class="hero-amount"><span class="currency">R$</span><span id="homeFaturamento">0,00</span></div>
+          <div class="hero-amount"><span class="currency">R$</span><span id="homeFaturamento">0,00</span><button class="hero-eye" onclick="toggleSaldo()" aria-label="Mostrar/esconder saldo" id="btnOlho"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           <div class="hero-meta">
             <div class="hero-meta-item">
               <div class="hero-meta-dot"></div>
@@ -1327,7 +1336,8 @@
         <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="success-title">Pagamento registrado!</div>
         <div class="success-sub">Seu caixa foi atualizado automaticamente.</div>
-        <button class="btn-primary" style="margin-top:8px;" onclick="ir('financeiro')">Ver quanto ganhei hoje</button>
+        <button class="btn-primary" style="margin-top:8px;" onclick="ir('financeiro-pagamento')">+ Registrar outro pagamento</button>
+        <button class="btn-outline" onclick="ir('financeiro')">Ver quanto ganhei hoje</button>
         <button class="btn-outline" onclick="ir('home')">Voltar ao início</button>
       </div>
     </div>
@@ -1472,6 +1482,12 @@
           <label class="input-label">Preço unitário</label>
           <input class="input-field fmt-moeda" type="text" id="prodPreco" placeholder="R$ 0,00" inputmode="numeric">
           <span class="field-error" id="errProdPreco">Informe o preço</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Alertar quando estoque chegar em</label>
+          <input class="input-field" type="number" id="prodAlerta" placeholder="Ex: 3" min="1" inputmode="numeric">
+          <span class="field-error" id="errProdAlerta">Informe o número mínimo</span>
+          <span style="font-size:11px;color:var(--ink-400);margin-top:4px;display:block;">O produto aparecerá como crítico abaixo desse número</span>
         </div>
         <button class="btn-primary" onclick="salvarProduto()">Cadastrar produto</button>
       </div>
@@ -1743,11 +1759,15 @@ function renderHome() {
   const agendaHoje = agendamentos.filter(a => a.data === hoje);
   const lancHoje = lancamentos.filter(l => l.data === hoje);
   const totalHoje = lancHoje.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
-  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= (parseInt(p.alertaMin) || 3));
 
   // Faturamento
   const elFat = document.getElementById('homeFaturamento');
-  if (elFat) elFat.textContent = totalHoje.toFixed(2).replace('.', ',');
+  if (elFat) {
+    const val = totalHoje.toFixed(2).replace('.', ',');
+    elFat.dataset.valor = val;
+    elFat.textContent = saldoVisivel ? val : '••••';
+  }
 
   // Atendimentos
   const elAt = document.getElementById('homeAtendimentos');
@@ -2169,23 +2189,38 @@ function renderFinanceiro() {
   const elSai = document.getElementById('finSaidas');
   if (elSai) elSai.textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.',',');
 
-  // Gráfico — últimos 7 dias
+  // Gráfico — últimos 7 dias (barras empilhadas por forma de pagamento)
   const barEl = document.getElementById('barChart');
   if (barEl) {
     const nomes7 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     const dias7 = Array.from({length:7}, (_,i) => {
       const d = new Date(); d.setDate(d.getDate() - (6 - i)); d.setHours(0,0,0,0); return d;
     });
-    const totais = dias7.map(d => {
+    // Respeita o filtro de forma de pagamento
+    const formasFiltro = filtroForma ? [filtroForma] : ['Pix','Cartão','Dinheiro'];
+    const totaisDia = dias7.map(d => {
       const dStr = d.toLocaleDateString('pt-BR');
-      return lancamentos.filter(l => l.data === dStr && l.tipo === 'entrada').reduce((s,l) => s + (parseFloat(l.valor)||0), 0);
+      const base = lancamentos.filter(l => l.data === dStr && l.tipo === 'entrada');
+      const r = {};
+      formasFiltro.forEach(f => { r[f] = base.filter(l => l.forma === f).reduce((s,l) => s + (parseFloat(l.valor)||0), 0); });
+      r.total = formasFiltro.reduce((s,f) => s + r[f], 0);
+      return r;
     });
-    const maxVal = Math.max(...totais, 1);
+    const maxVal = Math.max(...totaisDia.map(t => t.total), 1);
+    const MAX_H = 70;
     barEl.innerHTML = dias7.map((d,i) => {
       const isHoje = d.toLocaleDateString('pt-BR') === hoje;
-      const h = Math.max(6, Math.round((totais[i] / maxVal) * 70));
-      return `<div class="bar-col">
-        <div class="bar${isHoje?' today':''}" style="height:${h}px;"></div>
+      const t = totaisDia[i];
+      const totalH = Math.max(t.total > 0 ? 8 : 6, Math.round((t.total / maxVal) * MAX_H));
+      const segs = t.total > 0
+        ? formasFiltro.map(f => {
+            const h = Math.round((t[f] / t.total) * totalH);
+            const cls = f === 'Pix' ? 'pix' : f === 'Cartão' ? 'cartao' : 'dinheiro';
+            return h > 0 ? `<div class="bar-seg ${cls}" style="height:${h}px;"></div>` : '';
+          }).join('')
+        : `<div class="bar-seg empty" style="height:6px;"></div>`;
+      return `<div class="bar-col${isHoje?' today':''}">
+        <div class="bar-stack" style="height:${totalH}px;">${segs}</div>
         <div class="bar-day">${nomes7[d.getDay()]}</div>
       </div>`;
     }).join('');
@@ -2346,7 +2381,7 @@ function renderEstoque() {
     return;
   }
 
-  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= (parseInt(p.alertaMin) || 3));
   if (alertEl) {
     alertEl.style.display = criticos.length ? 'flex' : 'none';
     alertEl.querySelector('span').textContent = criticos.length + (criticos.length === 1 ? ' produto em falta — repor agora' : ' produtos em falta — repor agora');
@@ -2354,9 +2389,9 @@ function renderEstoque() {
 
   el.innerHTML = estoque.map(p => {
     const qty = parseInt(p.quantidade);
+    const limite = parseInt(p.alertaMin) || 3;
     let tag = '';
-    if (qty <= 2) tag = `<span class="tag-red"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Crítico</span>`;
-    else if (qty <= 5) tag = `<span class="tag-amber"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Baixo</span>`;
+    if (qty <= limite) tag = `<span class="tag-red"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Crítico</span>`;
     else tag = `<span class="tag-green"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="margin-right:2px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>OK</span>`;
     return `
       <div class="product-row">
@@ -2374,22 +2409,25 @@ function renderEstoque() {
 }
 
 async function salvarProduto() {
-  const nome  = document.getElementById('prodNome').value.trim();
-  const qtd   = document.getElementById('prodQtd').value;
+  const nome     = document.getElementById('prodNome').value.trim();
+  const qtd      = document.getElementById('prodQtd').value;
   const precoStr = document.getElementById('prodPreco').value.trim();
-  mostrarErro('prodNome',  'errProdNome',  !nome);
-  mostrarErro('prodQtd',   'errProdQtd',   qtd === '' || qtd === null);
-  mostrarErro('prodPreco', 'errProdPreco', !precoStr || precoStr === 'R$ 0,00');
-  if (!nome || qtd === '' || !precoStr || precoStr === 'R$ 0,00') return;
+  const alerta   = document.getElementById('prodAlerta').value;
+  mostrarErro('prodNome',   'errProdNome',   !nome);
+  mostrarErro('prodQtd',    'errProdQtd',    qtd === '' || qtd === null);
+  mostrarErro('prodPreco',  'errProdPreco',  !precoStr || precoStr === 'R$ 0,00');
+  mostrarErro('prodAlerta', 'errProdAlerta', !alerta || parseInt(alerta) < 1);
+  if (!nome || qtd === '' || !precoStr || precoStr === 'R$ 0,00' || !alerta || parseInt(alerta) < 1) return;
 
   const preco = parseFloat(precoStr.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
-  const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0, preco };
+  const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0, preco, alertaMin: parseInt(alerta) };
   mostrarToast('Salvando...');
   await sheetsPost('Estoque', registro);
   estoque.push(registro);
-  document.getElementById('prodNome').value  = '';
-  document.getElementById('prodQtd').value   = '';
-  document.getElementById('prodPreco').value = '';
+  document.getElementById('prodNome').value   = '';
+  document.getElementById('prodQtd').value    = '';
+  document.getElementById('prodPreco').value  = '';
+  document.getElementById('prodAlerta').value = '';
   mostrarToast('Produto cadastrado!');
   ir('estoque');
 }
@@ -2515,7 +2553,7 @@ function renderReposicaoLista(lista) {
   }
   el.innerHTML = lista.map(p => {
     const qty = parseInt(p.quantidade) || 0;
-    const isCritico = qty <= 2;
+    const isCritico = qty <= (parseInt(p.alertaMin) || 3);
     return `<div class="product-row">
       <div class="product-img"></div>
       <div class="product-info">
@@ -2561,12 +2599,25 @@ function filtrarEstoque(termo) {
 // ═══════════════════════════════════════════════
 // BUSCA DE CLIENTES NO AGENDAMENTO
 // ═══════════════════════════════════════════════
+let saldoVisivel = true;
+function toggleSaldo() {
+  saldoVisivel = !saldoVisivel;
+  const el = document.getElementById('homeFaturamento');
+  const btn = document.getElementById('btnOlho');
+  if (el) el.textContent = saldoVisivel ? (el.dataset.valor || '0,00') : '••••';
+  if (btn) btn.innerHTML = saldoVisivel
+    ? '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+    : '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+}
+
 function filtrarClientesAg(termo) {
   const dd = document.getElementById('agClienteDropdown');
   if (!dd) return;
   if (!termo.trim()) { dd.style.display = 'none'; return; }
+  const t = termo.toLowerCase();
   const filtrados = clientes.filter(c =>
-    c.nome.toLowerCase().includes(termo.toLowerCase())
+    c.nome.toLowerCase().includes(t) ||
+    (c.telefone && c.telefone.replace(/\D/g,'').includes(termo.replace(/\D/g,'')))
   );
   if (!filtrados.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = filtrados.slice(0, 5).map(c => `
@@ -2632,7 +2683,7 @@ function recalcTotal() {
 function renderNotificacoes() {
   const el = document.getElementById('alertasAtivos');
   if (!el) return;
-  const criticos = estoque.filter(p => parseInt(p.quantidade) <= 2);
+  const criticos = estoque.filter(p => parseInt(p.quantidade) <= (parseInt(p.alertaMin) || 3));
   if (!criticos.length) {
     el.innerHTML = '<div class="empty-state" style="padding:20px 4px;"><div class="empty-state-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><div class="empty-state-sub">Tudo certo! Nenhum alerta ativo no momento.</div></div>';
     return;
