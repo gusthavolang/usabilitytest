@@ -127,17 +127,15 @@
 
   /* ── Responsivo: mobile ── */
   @media (max-width: 700px) {
-    html { height: 100vh; height: 100dvh; overflow: hidden; }
-    body { height: 100vh; height: 100dvh; min-height: unset; padding: 0; margin: 0; background: var(--surface); background-image: none; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
-    .outer { flex: 1; min-height: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 0; width: 100%; }
+    html, body { height: 100%; overflow: hidden; padding: 0; margin: 0; background: var(--surface); background-image: none; display: block; }
+    /* position:fixed + inset:0 é a abordagem mais confiável em qualquer browser mobile */
+    .outer { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; gap: 0; padding: 0; }
     .phone-col { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 0; }
     .phone { flex: 1; min-height: 0; width: 100%; border-radius: 0; padding: 0; box-shadow: none; display: flex; flex-direction: column; }
-    .phone-inner { flex: 1; min-height: 0; width: 100%; height: 100%; border-radius: 0; display: flex; flex-direction: column; }
+    .phone-inner { flex: 1; min-height: 0; width: 100%; border-radius: 0; display: flex; flex-direction: column; overflow: hidden; }
     .phone-caption { display: none; }
-    .notch { display: none; } /* mobile tem status bar nativo */
-    /* Data e horário empilhados no mobile */
+    .notch { display: none; }
     .data-hora-row { flex-direction: column !important; }
-    /* Calendário não ultrapassa o card */
     .cal-grid { overflow: hidden; }
   }
 
@@ -1646,25 +1644,25 @@ async function sheetsGet(aba) {
 
 async function sheetsUpdate(aba, id, campo, valor) {
   try {
-    await fetch(API, {
+    const r = await fetch(API, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ acao: 'atualizar', aba, id, campo, valor })
     });
-    return true;
+    const json = await r.json();
+    return json.status === 'atualizado';
   } catch { return false; }
 }
 
 async function sheetsPost(aba, registro) {
   try {
-    await fetch(API, {
+    const r = await fetch(API, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ acao: 'inserir', aba, registro })
     });
-    return true;
+    const json = await r.json();
+    return json.status === 'inserido';
   } catch { return false; }
 }
 
