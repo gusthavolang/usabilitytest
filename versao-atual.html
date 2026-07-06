@@ -813,10 +813,12 @@
   .cal-day.muted .cal-dot { background: var(--ink-300); }
 
   /* Selected day label below calendar */
+  /* MELHORIA:
+  Removido text-transform:capitalize que deixava preposições erradas ("6 De Jul").
+  Os nomes de dias/meses já vêm formatados do JavaScript. */
   .cal-selected-label {
     font-size: 13px; color: var(--ink-700); font-weight: 600;
     padding: 0 4px;
-    text-transform: capitalize;
   }
   .cal-selected-label strong { color: var(--ink-900); font-weight: 700; }
 
@@ -843,6 +845,26 @@
 
   /* Make sure scroll content has bottom gap */
   .scroll > *:last-child { margin-bottom: 4px; }
+
+  /* MELHORIA:
+  Skeleton de carregamento (shimmer) exibido na Home enquanto os dados
+  do Google Sheets chegam — elimina a sensação de tela vazia/protótipo. */
+  .skeleton {
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--ink-100) 25%, var(--ink-200) 50%, var(--ink-100) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+  /* MELHORIA:
+  Estado desabilitado dos botões primários — feedback visual claro
+  enquanto o app salva no Google Sheets (evita duplo clique). */
+  .btn-primary:disabled {
+    opacity: 0.65; cursor: default;
+    transform: none; box-shadow: none;
+  }
 </style>
 </head>
 <body>
@@ -909,11 +931,15 @@
             <div class="sub" id="homeDataHoje"></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
+            <!-- MELHORIA:
+            Dot de notificação agora tem id e só aparece quando existe alerta real
+            (antes ficava sempre aceso). Avatar ganhou ação: abre a tela de
+            lembretes/configurações, que antes era inacessível no app. -->
             <div class="header-icon" onclick="ir('notificacoes')" role="button" aria-label="Notificações" tabindex="0">
               <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-              <div class="dot"></div>
+              <div class="dot" id="notifDot" style="display:none;"></div>
             </div>
-            <div class="avatar" id="homeAvatar" style="cursor:pointer;">A</div>
+            <div class="avatar" id="homeAvatar" style="cursor:pointer;" onclick="ir('mais')" role="button" aria-label="Configurações de lembretes" tabindex="0">A</div>
           </div>
         </div>
       </div>
@@ -939,7 +965,10 @@
           <div id="homeProximos"></div>
         </div>
 
-        <div class="alert-bar" id="homeAlertEstoque" style="display:none;">
+        <!-- MELHORIA:
+        O alerta de estoque crítico tinha uma seta "→" mas não era clicável.
+        Agora leva direto para a tela de Estoque, como o visual sugere. -->
+        <div class="alert-bar" id="homeAlertEstoque" style="display:none;cursor:pointer;" onclick="ir('estoque')" role="button" tabindex="0" aria-label="Ver produtos com estoque crítico">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Produto(s) com estoque crítico</span>
           <span style="font-size:18px;font-weight:700;">→</span>
@@ -947,7 +976,7 @@
 
         <div class="section-label">Acesso rápido</div>
         <div class="quick-actions">
-          <button class="qa-btn" onclick="ir('agenda-novo')">
+          <button class="qa-btn" onclick="novoAgendamento()">
             <div class="qa-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
             <div><span>Agendar</span><span class="qa-sub">Novo horário</span></div>
           </button>
@@ -979,7 +1008,7 @@
       <div class="s-header">
         <div class="s-header-row">
           <div class="title">Agenda</div>
-          <button class="btn-compact" onclick="ir('agenda-novo')">
+          <button class="btn-compact" onclick="novoAgendamento()">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Novo
           </button>
@@ -1029,14 +1058,17 @@
         </div>
       </div>
       <div class="scroll">
+        <!-- MELHORIA:
+        Padronização dos campos de formulário: removido o fundo cinza #f7f7f7
+        que destoava dos demais inputs do app (todos brancos, mesmo Design System). -->
         <div class="input-group" style="position:relative;">
           <label class="input-label">Cliente</label>
-          <input class="input-field" id="agCliente" type="text" placeholder="Buscar cliente cadastrado..." style="background:#f7f7f7;" oninput="filtrarClientesAg(this.value)" autocomplete="off">
+          <input class="input-field" id="agCliente" type="text" placeholder="Buscar cliente cadastrado..." oninput="filtrarClientesAg(this.value)" autocomplete="off">
           <div class="cliente-dropdown" id="agClienteDropdown" style="display:none;"></div>
         </div>
         <div class="input-group">
           <label class="input-label">Serviço</label>
-          <select class="input-field" id="agServico" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="agServico">
             <option value="">Selecionar serviço</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
@@ -1051,11 +1083,11 @@
         <div class="data-hora-row" style="display:flex;gap:8px;">
           <div class="input-group" style="flex:1">
             <label class="input-label">Data</label>
-            <input class="input-field" id="agendaData" type="date" style="background:#f7f7f7;color:#1a1a1a;">
+            <input class="input-field" id="agendaData" type="date">
           </div>
           <div class="input-group" style="flex:1">
             <label class="input-label">Horário</label>
-            <select class="input-field" id="agendaHora" style="background:#f7f7f7;appearance:none;">
+            <select class="input-field" id="agendaHora">
             <option value="">Selecionar</option>
             <option>08:00</option><option>08:30</option>
             <option>09:00</option><option>09:30</option>
@@ -1074,7 +1106,7 @@
         </div>
         <div class="input-group">
           <label class="input-label">Profissional (opcional)</label>
-          <input class="input-field" id="agProfissional" type="text" placeholder="Ex: Ana, João..." style="background:#f7f7f7;">
+          <input class="input-field" id="agProfissional" type="text" placeholder="Ex: Ana, João...">
         </div>
         <div style="display:flex;align-items:center;gap:8px;padding:8px 0;">
           <svg width="14" height="14" fill="none" stroke-width="2" stroke="#1D9E75" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1171,7 +1203,7 @@
         <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="success-title">Cliente cadastrado!</div>
         <div class="success-sub" id="successClienteNome">O cliente foi adicionado à sua lista.</div>
-        <button class="btn-primary" style="margin-top:8px;" onclick="ir('agenda-novo')">Agendar horário</button>
+        <button class="btn-primary" style="margin-top:8px;" onclick="novoAgendamento()">Agendar horário</button>
         <button class="btn-outline" onclick="ir('clientes')">Ver lista de clientes</button>
       </div>
     </div>
@@ -1291,7 +1323,7 @@
       <div class="scroll">
         <div class="input-group">
           <label class="input-label">Serviço</label>
-          <select class="input-field" id="pagServico" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="pagServico">
             <option value="">Selecionar serviço</option>
             <option>Corte de cabelo</option>
             <option>Escova</option>
@@ -1306,7 +1338,7 @@
         </div>
         <div class="input-group" id="pagProdutoGroup" style="display:none;flex-direction:column;gap:6px;">
           <label class="input-label">Produto vendido</label>
-          <select class="input-field" id="pagProduto" style="background:#f7f7f7;appearance:none;">
+          <select class="input-field" id="pagProduto">
             <option value="">Selecionar produto...</option>
           </select>
           <span style="font-size:11px;color:var(--brand-700);font-weight:500;">O estoque será atualizado automaticamente ao confirmar</span>
@@ -1525,12 +1557,15 @@
           <button class="btn-outline" style="margin-top:10px;">Editar mensagem</button>
         </div>
       </div>
+      <!-- MELHORIA:
+      Esta tela (Lembretes) não pertence à aba Estoque — removido o destaque
+      incorreto na tab bar, que confundia a navegação. -->
       <div class="tab-bar">
         <div class="tab" onclick="ir('home')" role="button" aria-label="Início" tabindex="0"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg><span>Início</span></div>
         <div class="tab" onclick="ir('agenda')" role="button" aria-label="Agenda" tabindex="0"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></div>
         <div class="tab" onclick="ir('clientes')" role="button" aria-label="Clientes" tabindex="0"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Clientes</span></div>
         <div class="tab" onclick="ir('financeiro')" role="button" aria-label="Financeiro" tabindex="0"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Financeiro</span></div>
-        <div class="tab active" onclick="ir('estoque')" role="button" aria-label="Estoque" tabindex="0" aria-current="page"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Estoque</span></div>
+        <div class="tab" onclick="ir('estoque')" role="button" aria-label="Estoque" tabindex="0"><svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m0-14v14m-8-4l8 4"/></svg><span>Estoque</span></div>
       </div>
     </div>
 
@@ -1638,8 +1673,32 @@ async function sheetsGet(aba) {
     const url = API + '?acao=listar&aba=' + encodeURIComponent(aba);
     const r = await fetch(url);
     const json = await r.json();
-    return json.dados || [];
+    return normalizarDados(json.dados || []);
   } catch { return []; }
+}
+
+/* MELHORIA (correção crítica):
+O Google Sheets converte datas e horários digitados em células para
+timestamps ISO (ex: "2026-05-20T03:00:00.000Z"). O app compara textos
+no formato "dd/mm/aaaa" e "HH:MM", então TODO registro recarregado da
+planilha sumia da agenda, do financeiro e do histórico do cliente.
+Esta função normaliza os dados na chegada, em um único ponto. */
+function normalizarDados(lista) {
+  const ehISO = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v);
+  return lista.map(r => {
+    const n = { ...r };
+    ['data', 'dataCriacao', 'dataCadastro'].forEach(c => {
+      if (ehISO(n[c])) n[c] = new Date(n[c]).toLocaleDateString('pt-BR');
+    });
+    ['horario', 'hora'].forEach(c => {
+      if (ehISO(n[c])) n[c] = new Date(n[c]).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    });
+    if (ehISO(n.aniversario)) {
+      const d = new Date(n.aniversario);
+      n.aniversario = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    return n;
+  });
 }
 
 async function sheetsUpdate(aba, id, campo, valor) {
@@ -1701,6 +1760,12 @@ function ir(id) {
   if (id === 'agenda-novo') {
     const campos = ['agCliente', 'agendaData', 'agProfissional'];
     campos.forEach(c => { const el = document.getElementById(c); if (el) el.value = ''; });
+    /* MELHORIA: impede agendar em datas passadas direto no seletor de data. */
+    const elData = document.getElementById('agendaData');
+    if (elData) {
+      const h = new Date();
+      elData.min = h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0');
+    }
     const sel = document.getElementById('agServico');
     if (sel) sel.selectedIndex = 0;
     const selH = document.getElementById('agendaHora');
@@ -1724,6 +1789,19 @@ function fazerLogin() {
 // ═══════════════════════════════════════════════
 async function carregarTodosDados() {
   mostrarToast('Carregando seus dados...');
+  /* MELHORIA:
+  Skeleton (shimmer) na lista de próximos atendimentos enquanto os dados
+  do Google Sheets chegam — o app nunca fica com "buraco" em branco. */
+  const elProx = document.getElementById('homeProximos');
+  if (elProx) elProx.innerHTML = Array(3).fill(`
+    <div class="list-item" style="cursor:default;">
+      <div class="skeleton" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="skeleton" style="height:12px;width:55%;"></div>
+        <div class="skeleton" style="height:10px;width:35%;"></div>
+      </div>
+      <div class="skeleton" style="height:22px;width:48px;border-radius:999px;"></div>
+    </div>`).join('');
   const [c, a, l, e] = await Promise.all([
     sheetsGet('Clientes'),
     sheetsGet('Agendamentos'),
@@ -1756,47 +1834,66 @@ function renderHome() {
   if (elData) elData.textContent = dataExtenso;
   const agendaHoje = agendamentos.filter(a => a.data === hoje);
   const lancHoje = lancamentos.filter(l => l.data === hoje);
-  const totalHoje = lancHoje.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
+  /* MELHORIA:
+  O "Caixa de hoje" da Home agora usa o mesmo cálculo do Financeiro
+  (entradas − saídas). Antes a Home somava despesas como se fossem
+  entradas, mostrando um valor diferente entre as duas telas. */
+  const totalHoje = lancHoje.reduce((s, l) => s + (l.tipo === 'saida' ? -1 : 1) * (parseFloat(l.valor) || 0), 0);
   const criticos = estoque.filter(p => parseInt(p.quantidade) <= (parseInt(p.alertaMin) || 3));
 
   // Faturamento
   const elFat = document.getElementById('homeFaturamento');
   if (elFat) {
-    const val = totalHoje.toFixed(2).replace('.', ',');
+    const val = fmtBRL(totalHoje);
     elFat.dataset.valor = val;
     elFat.textContent = saldoVisivel ? val : '••••';
   }
 
+  /* MELHORIA:
+  A Home agora responde "quem é meu próximo cliente?" de verdade:
+  ignora cancelados, ordena por horário e considera a hora atual.
+  Antes mostrava agendamentos já passados (e até cancelados). */
+  const horaAgora = String(agora.getHours()).padStart(2,'0') + ':' + String(agora.getMinutes()).padStart(2,'0');
+  const ativosHoje = agendaHoje
+    .filter(a => a.status !== 'Cancelado')
+    .sort((a,b) => (a.horario||'').localeCompare(b.horario||''));
+  const futurosHoje = ativosHoje.filter(a => (a.horario||'') >= horaAgora);
+
   // Atendimentos
   const elAt = document.getElementById('homeAtendimentos');
-  if (elAt) elAt.textContent = agendaHoje.length;
+  if (elAt) elAt.textContent = ativosHoje.length;
 
   // Próximo horário
   const elProx = document.getElementById('homeProximoHorario');
-  if (elProx) {
-    const proximos = agendaHoje
-      .filter(a => a.status !== 'Cancelado')
-      .sort((a,b) => (a.horario||'').localeCompare(b.horario||''));
-    elProx.textContent = proximos.length ? proximos[0].horario : 'livre';
-  }
+  if (elProx) elProx.textContent = futurosHoje.length ? futurosHoje[0].horario : '—';
 
   // Alerta estoque
   const elAlert = document.getElementById('homeAlertEstoque');
   if (elAlert) elAlert.style.display = criticos.length ? 'flex' : 'none';
 
+  /* MELHORIA: o dot vermelho no sino só acende quando existe alerta real. */
+  const elDot = document.getElementById('notifDot');
+  if (elDot) elDot.style.display = criticos.length ? 'block' : 'none';
+
   // Próximos agendamentos
-  renderProximosHome(agendaHoje);
+  renderProximosHome(futurosHoje, ativosHoje.length);
 }
 
-function renderProximosHome(lista) {
+function renderProximosHome(lista, totalDia) {
   const el = document.getElementById('homeProximos');
   if (!el) return;
   if (!lista.length) {
+    /* MELHORIA:
+    Estado vazio agora diferencia "agenda livre" de "dia concluído",
+    dando sensação de acompanhamento real do dia de trabalho. */
+    const concluido = (totalDia || 0) > 0;
     el.innerHTML = `
       <div class="empty-state" style="padding:20px 4px;">
-        <div class="empty-state-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-        <div class="empty-state-title">Agenda livre</div>
-        <div class="empty-state-sub">Sem horários marcados para hoje</div>
+        <div class="empty-state-icon">${concluido
+          ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'
+          : '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'}</div>
+        <div class="empty-state-title">${concluido ? 'Dia concluído!' : 'Agenda livre'}</div>
+        <div class="empty-state-sub">${concluido ? 'Todos os atendimentos de hoje já foram realizados' : 'Sem horários marcados para hoje'}</div>
       </div>`;
     return;
   }
@@ -1889,7 +1986,7 @@ function verCliente(id) {
         </div>`
       ).join('') || '<div class="empty-state" style="padding:18px 4px;"><div class="empty-state-sub">Sem atendimentos registrados ainda</div></div>'}
     </div>
-    <button class="btn-primary" onclick="ir('agenda-novo')">+ Agendar horário</button>
+    <button class="btn-primary" onclick="novoAgendamento(null, '${c.nome.replace(/'/g, "\\'")}')">+ Agendar horário</button>
   `;
   ir('cliente-detalhe');
 }
@@ -1941,9 +2038,10 @@ async function salvarCliente() {
     dataCadastro: new Date().toLocaleDateString('pt-BR')
   };
 
-  mostrarToast('Salvando...');
+  travarBotao('#screen-cliente-novo .btn-primary', true, 'Salvando...');
   await sheetsPost('Clientes', registro);
   clientes.push(registro);
+  travarBotao('#screen-cliente-novo .btn-primary', false, 'Salvar cliente');
 
   document.getElementById('successClienteNome').textContent = nome + ' foi adicionado à lista de clientes.';
   document.getElementById('novoNome').value = '';
@@ -2013,7 +2111,12 @@ function renderCalendario() {
     const mesesAbr = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
     const ehHoje = diaAgendaAtual.getTime() === hoje.getTime();
     const prefix = ehHoje ? 'Hoje · ' : '';
-    label.innerHTML = `${prefix}<strong>${diasSem[diaAgendaAtual.getDay()]}, ${diaAgendaAtual.getDate()} de ${mesesAbr[diaAgendaAtual.getMonth()]}</strong>`;
+    /* MELHORIA:
+    O rótulo do dia selecionado agora mostra o total de atendimentos,
+    respondendo de imediato "como está esse dia?" sem precisar rolar. */
+    const qtdDia = agendamentos.filter(a => a.data === diaAgendaAtual.toLocaleDateString('pt-BR') && a.status !== 'Cancelado').length;
+    const sufixo = qtdDia ? ` · ${qtdDia} atendimento${qtdDia > 1 ? 's' : ''}` : '';
+    label.innerHTML = `${prefix}<strong>${diasSem[diaAgendaAtual.getDay()]}, ${diaAgendaAtual.getDate()} de ${mesesAbr[diaAgendaAtual.getMonth()]}</strong>${sufixo}`;
   }
 }
 
@@ -2046,7 +2149,7 @@ function renderAgenda() {
         <div class="empty-state-title">Agenda livre ${isDiaLabel}</div>
         <div class="empty-state-sub">Adicione um agendamento para começar</div>
       </div>
-      <button class="btn-primary" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
+      <button class="btn-primary" onclick="novoAgendamento()">+ Novo agendamento</button>`;
     return;
   }
 
@@ -2071,12 +2174,34 @@ function renderAgenda() {
         </div>
       </div>`;
     }
+    /* MELHORIA:
+    Tocar num horário vazio abre o formulário já com data e hora
+    preenchidas — reduz de 4 para 1 as decisões do usuário. */
     return `
       <div class="agenda-slot" style="min-height:40px;">
         <div class="agenda-time">${h}</div>
-        <div class="agenda-block empty" style="min-height:32px;" onclick="ir('agenda-novo')"><span>—</span></div>
+        <div class="agenda-block empty" style="min-height:32px;" onclick="novoAgendamento('${h}')"><span>—</span></div>
       </div>`;
-  }).join('') + '</div>' + `<button class="btn-primary" style="margin-top:6px;" onclick="ir('agenda-novo')">+ Novo agendamento</button>`;
+  }).join('') + '</div>' + `<button class="btn-primary" style="margin-top:6px;" onclick="novoAgendamento()">+ Novo agendamento</button>`;
+}
+
+/* MELHORIA:
+Novo agendamento inteligente: pré-preenche a data com o dia selecionado
+na agenda (ou hoje) e, quando o usuário toca num horário vago, também a
+hora. Menos digitação, menos dúvida, sensação de app que "entende" o uso. */
+function novoAgendamento(hora, cliente) {
+  ir('agenda-novo');
+  const d = diaAgendaAtual || new Date();
+  const elData = document.getElementById('agendaData');
+  if (elData) elData.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  if (hora) {
+    const selH = document.getElementById('agendaHora');
+    if (selH) selH.value = hora;
+  }
+  if (cliente) {
+    const elCli = document.getElementById('agCliente');
+    if (elCli) elCli.value = cliente;
+  }
 }
 
 async function salvarAgendamento() {
@@ -2101,9 +2226,10 @@ async function salvarAgendamento() {
     dataCriacao: new Date().toLocaleDateString('pt-BR')
   };
 
-  mostrarToast('Salvando...');
+  travarBotao('#screen-agenda-novo .btn-primary', true, 'Salvando...');
   await sheetsPost('Agendamentos', registro);
   agendamentos.push(registro);
+  travarBotao('#screen-agenda-novo .btn-primary', false, 'Confirmar agendamento');
   // Atualiza calendário se já foi inicializado
   if (mesAgendaVista) renderCalendario();
   ir('agenda-sucesso');
@@ -2181,11 +2307,11 @@ function renderFinanceiro() {
   const saldo = totalEntradas - totalSaidas;
 
   const elSaldo = document.getElementById('finSaldo');
-  if (elSaldo) elSaldo.textContent = saldo.toFixed(2).replace('.',',');
+  if (elSaldo) elSaldo.textContent = fmtBRL(saldo);
   const elEnt = document.getElementById('finEntradas');
-  if (elEnt) elEnt.textContent = 'R$ ' + totalEntradas.toFixed(2).replace('.',',');
+  if (elEnt) elEnt.textContent = 'R$ ' + fmtBRL(totalEntradas);
   const elSai = document.getElementById('finSaidas');
-  if (elSai) elSai.textContent = 'R$ ' + totalSaidas.toFixed(2).replace('.',',');
+  if (elSai) elSai.textContent = 'R$ ' + fmtBRL(totalSaidas);
 
   // Gráfico — últimos 7 dias (barras empilhadas por forma de pagamento)
   const barEl = document.getElementById('barChart');
@@ -2244,7 +2370,7 @@ function renderFinanceiro() {
         return `<div style="margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
             <span style="font-size:12px;font-weight:700;color:${cores[f]};">${f}</span>
-            <span style="font-size:13px;font-weight:700;color:var(--ink-900);">R$ ${val.toFixed(2).replace('.',',')} <span style="font-size:11px;font-weight:500;color:var(--ink-400);">(${pct}%)</span></span>
+            <span style="font-size:13px;font-weight:700;color:var(--ink-900);">R$ ${fmtBRL(val)} <span style="font-size:11px;font-weight:500;color:var(--ink-400);">(${pct}%)</span></span>
           </div>
           <div style="height:8px;border-radius:4px;background:var(--ink-100);overflow:hidden;">
             <div style="height:100%;width:${pct}%;border-radius:4px;background:${cores[f]};"></div>
@@ -2273,7 +2399,7 @@ function renderFinanceiro() {
         <div class="lname">${l.descricao}</div>
         <div class="lsub">${l.forma || ''}${l.hora ? ' · ' + l.hora : ''}</div>
       </div>
-      <div class="lanc-val ${l.tipo==='entrada'?'in':'out'}">${l.tipo==='entrada'?'+':'-'}R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</div>
+      <div class="lanc-val ${l.tipo==='entrada'?'in':'out'}">${l.tipo==='entrada'?'+':'-'}R$ ${fmtBRL(l.valor)}</div>
     </div>
   `).join('');
 }
@@ -2350,9 +2476,10 @@ async function registrarSaida() {
     hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
   };
 
-  mostrarToast('Salvando...');
+  travarBotao('#screen-saida .btn-primary', true, 'Salvando...');
   await sheetsPost('Financeiro', registro);
   lancamentos.push(registro);
+  travarBotao('#screen-saida .btn-primary', false, 'Confirmar saída');
   document.getElementById('saidaDescricao').value = '';
   document.getElementById('saidaValor').value = '';
   ir('saida-sucesso');
@@ -2419,9 +2546,10 @@ async function salvarProduto() {
 
   const preco = parseFloat(precoStr.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
   const registro = { id: Date.now().toString(), nome, quantidade: parseInt(qtd) || 0, preco, alertaMin: parseInt(alerta) };
-  mostrarToast('Salvando...');
+  travarBotao('#screen-produto-novo .btn-primary', true, 'Salvando...');
   await sheetsPost('Estoque', registro);
   estoque.push(registro);
+  travarBotao('#screen-produto-novo .btn-primary', false, 'Cadastrar produto');
   document.getElementById('prodNome').value   = '';
   document.getElementById('prodQtd').value    = '';
   document.getElementById('prodPreco').value  = '';
@@ -2522,9 +2650,10 @@ async function confirmarReposicao() {
     hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
   };
 
-  mostrarToast('Salvando...');
+  travarBotao('#screen-reposicao .btn-primary', true, 'Enviando pedido...');
   await sheetsPost('Financeiro', registro);
   lancamentos.push(registro);
+  travarBotao('#screen-reposicao .btn-primary', false, 'Confirmar pedido');
   ir('reposicao-sucesso');
 }
 
@@ -2561,7 +2690,7 @@ function renderReposicaoLista(lista) {
           <span style="${isCritico ? 'color:var(--danger-700);font-weight:700;' : 'color:var(--ink-700);font-weight:600;'}">${qty} un.</span>
           ${isCritico ? '<span class="tag-red">Crítico</span>' : ''}
         </div>
-        <div style="font-size:11px;color:var(--ink-400);margin-top:2px;">R$ ${parseFloat(p.preco||0).toFixed(2).replace('.',',')} / un.</div>
+        <div style="font-size:11px;color:var(--ink-400);margin-top:2px;">R$ ${fmtBRL(p.preco)} / un.</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <span style="font-size:10px;color:var(--ink-400);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Qtde</span>
@@ -2642,18 +2771,46 @@ function iniciais(nome) {
   return nome.trim().split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
 }
 
+/* MELHORIA:
+Formatação de moeda padrão pt-BR com separador de milhar em todo o app
+(R$ 1.234,56). Antes valores acima de mil apareciam como "1234,56". */
+function fmtBRL(n) {
+  return (parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* MELHORIA:
+Trava anti-duplo-clique nos botões de salvar: enquanto o registro é
+enviado ao Google Sheets, o botão desabilita e mostra "Salvando...".
+Evita lançamentos e cadastros duplicados na planilha. */
+function travarBotao(seletor, travado, texto) {
+  const b = document.querySelector(seletor);
+  if (!b) return;
+  b.disabled = travado;
+  if (texto) b.textContent = texto;
+}
+
+/* MELHORIA:
+Toast corrigido e padronizado: agora usa o estilo do Design System
+definido no CSS (antes duplicava estilos inline divergentes) e o timer
+é reiniciado a cada mensagem — antes um toast novo era apagado cedo
+pelo timer do toast anterior. Ganhou também animação sutil de entrada. */
+let toastTimer = null;
 function mostrarToast(msg, tipo) {
   let el = document.getElementById('toast');
   if (!el) {
     el = document.createElement('div');
     el.id = 'toast';
-    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:9999;transition:opacity 0.3s;pointer-events:none;';
     document.body.appendChild(el);
   }
   el.textContent = msg;
-  el.style.background = tipo === 'erro' ? '#A32D2D' : '#1a1a1a';
+  el.style.background = tipo === 'erro' ? 'var(--danger-700)' : 'var(--ink-900)';
   el.style.opacity = '1';
-  setTimeout(() => { el.style.opacity = '0'; }, 2500);
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(8px)';
+  }, 2500);
 }
 
 function mostrarErro(inputId, erroId, mostrar) {
@@ -2675,7 +2832,7 @@ function recalcTotal() {
   document.querySelectorAll('#screen-reposicao .qty-input').forEach(input => {
     total += (parseInt(input.value)||0) * (parseFloat(input.dataset.price)||0);
   });
-  document.getElementById('totalPedido').textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  document.getElementById('totalPedido').textContent = 'R$ ' + fmtBRL(total);
 }
 
 function renderNotificacoes() {
@@ -2717,6 +2874,16 @@ document.addEventListener('DOMContentLoaded', () => {
   ['novoNome','novoTel','pagValor'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => el.classList.remove('error'));
+  });
+
+  /* MELHORIA:
+  Pressionar Enter nos campos de login já entra no app —
+  comportamento esperado de qualquer produto publicado. */
+  ['loginUser','loginPass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); fazerLogin(); }
+    });
   });
 
   // Suporte a teclado em elementos com role=button
